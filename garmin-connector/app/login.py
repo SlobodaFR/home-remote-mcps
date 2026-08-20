@@ -41,7 +41,7 @@ def start_login(email: str, password: str) -> dict[str, Any]:
         _pending[pending_id] = (client, time.monotonic())
         return {"status": "mfa_required", "pendingId": pending_id}
 
-    return {"status": "success", "tokensJson": client.dumps()}
+    return {"status": "success", "tokensJson": client.client.dumps()}
 
 
 def submit_mfa(pending_id: str, code: str) -> dict[str, Any]:
@@ -52,10 +52,10 @@ def submit_mfa(pending_id: str, code: str) -> dict[str, Any]:
 
     client, _ = entry
     try:
-        client.resume_login(None, code)
+        client.resume_login({}, code)
     except GarminConnectAuthenticationError:
         return {"status": "error", "message": "Code MFA invalide"}
     except Exception as err:  # noqa: BLE001
         return {"status": "error", "message": str(err)}
 
-    return {"status": "success", "tokensJson": client.dumps()}
+    return {"status": "success", "tokensJson": client.client.dumps()}

@@ -11,7 +11,7 @@ from garminconnect.exceptions import (
 
 def _client_from_tokens(tokens_json: dict[str, Any]) -> Garmin:
     client = Garmin()
-    client.loads(json.dumps(tokens_json))
+    client.client.loads(json.dumps(tokens_json))
     return client
 
 
@@ -22,14 +22,14 @@ def with_tokens(tokens_json: dict[str, Any], call: Callable[[Garmin], Any]) -> d
     `refreshedTokensJson` included, so the backend re-encrypts and persists
     the rotated token instead of letting it go stale."""
     client = _client_from_tokens(tokens_json)
-    before = client.dumps()
+    before = client.client.dumps()
     try:
         result = call(client)
     except GarminConnectAuthenticationError as err:
         raise HTTPException(status_code=401, detail=f"Session Garmin expiree: {err}") from err
     except GarminConnectConnectionError as err:
         raise HTTPException(status_code=502, detail=f"Garmin injoignable: {err}") from err
-    after = client.dumps()
+    after = client.client.dumps()
 
     body: dict[str, Any] = {"data": result}
     if after != before:
