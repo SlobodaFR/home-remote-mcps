@@ -152,20 +152,38 @@ ALLOWED_METHODS = {
 
 
 def _client_from_tokens(tokens_json: dict[str, Any]) -> Garmin:
+    # Restoring via the low-level Client.loads() (client.client.loads())
+    # skips Garmin._load_profile_and_settings(), so display_name/full_name/
+    # unit_system stay None on the wrapper - which breaks any endpoint that
+    # needs the display name in its URL (e.g. sleep data) with "Display
+    # name is not set", even though the account clearly has one. login()
+    # accepts an inline JSON tokenstore and always loads the profile
+    # afterwards ("tokenstore path may not populate it" - its own comment),
+    # so it must be used instead of poking the inner Client directly.
     client = Garmin()
-    client.client.loads(json.dumps(tokens_json))
+    client.login(tokenstore=json.dumps(tokens_json))
     return client
 
 
 def with_tokens(tokens_json: dict[str, Any], call: Callable[[Garmin], Any]) -> dict[str, Any]:
     """Runs `call` against a client restored from `tokens_json`. The lib
-    auto-refreshes the DI token before an about-to-expire call, so the
-    tokens after the call may differ from the ones passed in - only then is
-    `refreshedTokensJson` included, so the backend re-encrypts and persists
-    the rotated token instead of letting it go stale."""
-    client = _client_from_tokens(tokens_json)
-    before = client.client.dumps()
+    auto-refreshes the DI token before an about-to-expire call - including
+    proactively during restoration itself (see login()'s tokenstore path) -
+    so the tokens after the call may differ from the ones passed in. `before`
+    is taken from the *original* input, not from a post-restore snapshot,
+    so a refresh that happens during restoration is still detected; only
+    when the two differ is `refreshedTokensJson` included, so the backend
+    re-encrypts and persists the rotated token instead of letting it go
+    stale."""
+    before = json.dumps(
+        {
+            "di_token": tokens_json.get("di_token"),
+            "di_refresh_token": tokens_json.get("di_refresh_token"),
+            "di_client_id": tokens_json.get("di_client_id"),
+        }
+    )
     try:
+        client = _client_from_tokens(tokens_json)
         result = call(client)
     except GarminConnectAuthenticationError as err:
         raise HTTPException(status_code=401, detail=f"Session Garmin expiree: {err}") from err
