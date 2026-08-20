@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: theme('colors.soft-cloud');
+  color: theme('colors.ink');
+  font-family: theme('fontFamily.sans');
+}

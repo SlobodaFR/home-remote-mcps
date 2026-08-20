@@ -1,0 +1,56 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        ink: '#111111',
+        'on-primary': '#ffffff',
+        canvas: '#ffffff',
+        surface: '#ffffff',
+        'soft-cloud': '#f5f5f5',
+        charcoal: '#39393b',
+        mute: '#707072',
+        stone: '#9e9ea0',
+        hairline: '#cacacb',
+        'hairline-soft': '#e5e5e5',
+        success: '#007d48',
+        error: '#d30005',
+        warning: '#a15c00',
+      },
+      borderRadius: {
+        none: '0px',
+        sm: '18px',
+        DEFAULT: '24px',
+        lg: '30px',
+        full: '9999px',
+      },
+      spacing: {
+        xxs: '2px',
+        xs: '4px',
+        sm: '8px',
+        md: '12px',
+        lg: '18px',
+        xl: '24px',
+        xxl: '30px',
+        section: '48px',
+      },
+      fontFamily: {
+        display: ['Anton', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
+      fontSize: {
+        'display-campaign': ['64px', { lineHeight: '0.9', fontWeight: '500' }],
+        'heading-xl': ['32px', { lineHeight: '1.2', fontWeight: '500' }],
+        'heading-lg': ['24px', { lineHeight: '1.2', fontWeight: '500' }],
+        'heading-md': ['16px', { lineHeight: '1.75', fontWeight: '500' }],
+        'body-md': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
+        'body-strong': ['16px', { lineHeight: '1.5', fontWeight: '500' }],
+        'button-md': ['16px', { lineHeight: '1.5', fontWeight: '500' }],
+        'caption-md': ['14px', { lineHeight: '1.5', fontWeight: '500' }],
+        'caption-sm': ['12px', { lineHeight: '1.5', fontWeight: '500' }],
+      },
+    },
+  },
+  plugins: [],
+};

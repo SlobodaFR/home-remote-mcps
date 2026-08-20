@@ -1,0 +1,29 @@
+name: home-remote-mcps
+
+services:
+  home-remote-mcps:
+    image: ${IMAGE}:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - '127.0.0.1:3006:3000'
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    volumes:
+      - home-remote-mcps-data:/app/backend/data
+    depends_on:
+      - garmin-connector
+
+  garmin-connector:
+    image: ${GARMIN_CONNECTOR_IMAGE}:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file: garmin-connector.env
+    # Internal only - no published port. Reached by home-remote-mcps at
+    # http://garmin-connector:8000 over the compose network.
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+
+volumes:
+  home-remote-mcps-data:

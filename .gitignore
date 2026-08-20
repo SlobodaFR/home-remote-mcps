@@ -1,0 +1,21 @@
+node_modules
+dist
+build
+*.sqlite
+*.sqlite3
+.env
+.DS_Store
+coverage
+**/node_modules
+**/dist
+**/coverage
+**/data/*.sqlite
+**/reports
+**/.stryker-tmp
+backend/.env.dev
+
+# python sidecar
+garmin-connector/.venv
+garmin-connector/__pycache__
+garmin-connector/**/__pycache__
+garmin-connector/*.egg-info

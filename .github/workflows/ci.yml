@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint backend
+        run: npm run lint --workspace=backend
+
+      - name: Lint frontend
+        run: npm run lint --workspace=frontend
+
+      - name: Type-check frontend
+        run: npx tsc -b --noEmit
+        working-directory: frontend
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  garmin-connector-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        working-directory: garmin-connector
+
+      - name: Import-check the FastAPI app
+        run: GARMIN_CONNECTOR_SECRET=ci python -c "import app.main"
+        working-directory: garmin-connector
+
+  docker-build-check:
+    runs-on: ubuntu-latest
+    needs: [lint-and-test, garmin-connector-check]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build main app image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build garmin-connector image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: garmin-connector
+          push: false
+          cache-from: type=gha,scope=garmin-connector
+          cache-to: type=gha,mode=max,scope=garmin-connector
