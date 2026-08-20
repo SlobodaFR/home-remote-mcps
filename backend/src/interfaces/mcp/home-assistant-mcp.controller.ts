@@ -15,6 +15,7 @@ import {
   ApiKeyGuard,
   McpAuthenticatedRequest,
 } from '../http/guards/api-key.guard';
+import { registerHomeAssistantDomainTools } from './home-assistant-domain-tools';
 import { registerHomeAssistantTools } from './home-assistant-tools';
 
 /**
@@ -46,6 +47,11 @@ export class HomeAssistantMcpController {
       version: '1.0.0',
     });
     registerHomeAssistantTools(
+      server,
+      this.homeAssistantDataGateway,
+      req.mcpUserId,
+    );
+    registerHomeAssistantDomainTools(
       server,
       this.homeAssistantDataGateway,
       req.mcpUserId,

@@ -1,18 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
-import {
-  HomeAssistantDataGateway,
-  HomeAssistantNotConnectedError,
-} from '../../application/mcp/home-assistant-data-gateway';
-import {
-  HomeAssistantConnector,
-  HomeAssistantCredentials,
-} from '../../domain/home-assistant/home-assistant-connector';
+import { HomeAssistantDataGateway } from '../../application/mcp/home-assistant-data-gateway';
+import { makeHomeAssistantRunner } from './home-assistant-tool-runtime';
 
-function asJsonContent(data: unknown): {
-  content: { type: 'text'; text: string }[];
-} {
-  return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+interface HomeAssistantState {
+  entity_id: string;
+  state: string;
+  attributes?: { friendly_name?: string };
 }
 
 /**
@@ -20,35 +14,39 @@ function asJsonContent(data: unknown): {
  * behind an unofficial library), Home Assistant's REST API is small and
  * uniform, so a handful of tools plus one raw passthrough (`ha_request`,
  * mirroring `garmin_connectapi`) cover the whole surface. Domain-specific
- * tools (e.g. `ha_set_light`) can be layered on top later if useful.
+ * tools (lights, switches, climate, covers, media players - see
+ * home-assistant-domain-tools.ts) are layered on top for the common cases.
  */
 export function registerHomeAssistantTools(
   server: McpServer,
   gateway: HomeAssistantDataGateway,
   userId: string,
 ): void {
-  async function run(
-    call: (
-      connector: HomeAssistantConnector,
-      credentials: HomeAssistantCredentials,
-    ) => Promise<unknown>,
-  ): Promise<{
-    content: { type: 'text'; text: string }[];
-    isError?: boolean;
-  }> {
-    try {
-      const data = await gateway.run(userId, call);
-      return asJsonContent(data);
-    } catch (error) {
-      if (error instanceof HomeAssistantNotConnectedError) {
-        return {
-          content: [{ type: 'text' as const, text: error.message }],
-          isError: true,
-        };
-      }
-      throw error;
-    }
-  }
+  const run = makeHomeAssistantRunner(gateway, userId);
+
+  server.registerTool(
+    'ha_list_entities',
+    {
+      description:
+        'List entities as {entityId, friendlyName, state} - lighter than ha_get_states\' full attribute dump. Filter by domain (e.g. "light", "switch", "climate", "cover", "media_player", "sensor") to browse what\'s available before calling a domain-specific tool.',
+      inputSchema: z.object({ domain: z.string().optional() }),
+    },
+    ({ domain }) =>
+      run(async (connector, credentials) => {
+        const states = await connector.request<HomeAssistantState[]>(
+          credentials,
+          'GET',
+          '/api/states',
+        );
+        return states
+          .filter((s) => !domain || s.entity_id.startsWith(`${domain}.`))
+          .map((s) => ({
+            entityId: s.entity_id,
+            friendlyName: s.attributes?.friendly_name ?? s.entity_id,
+            state: s.state,
+          }));
+      }),
+  );
 
   server.registerTool(
     'ha_get_states',
