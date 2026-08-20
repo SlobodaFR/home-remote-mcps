@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  ConnectApiHttpMethod,
   GarminConnector,
   GarminDataResult,
   GarminLoginResult,
@@ -50,59 +51,35 @@ export class HttpGarminConnector extends GarminConnector {
   async checkTokens(
     tokensJson: string,
   ): Promise<GarminDataResult<{ valid: boolean }>> {
-    return this.postWithTokens('/session/check', tokensJson, {});
-  }
-
-  async getDailySteps(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>> {
-    return this.postWithTokens('/data/steps', tokensJson, { date });
-  }
-
-  async getSleep(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>> {
-    return this.postWithTokens('/data/sleep', tokensJson, { date });
-  }
-
-  async getHeartRate(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>> {
-    return this.postWithTokens('/data/heart-rate', tokensJson, { date });
-  }
-
-  async getBodyBattery(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>> {
-    return this.postWithTokens('/data/body-battery', tokensJson, { date });
-  }
-
-  async getStress(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>> {
-    return this.postWithTokens('/data/stress', tokensJson, { date });
-  }
-
-  async getActivities(
-    tokensJson: string,
-    limit: number,
-  ): Promise<GarminDataResult<Record<string, unknown>[]>> {
-    return this.postWithTokens('/data/activities', tokensJson, { limit });
-  }
-
-  private async postWithTokens<T>(
-    path: string,
-    tokensJson: string,
-    extra: Record<string, unknown>,
-  ): Promise<T> {
-    return this.post<T>(path, {
+    return this.post('/session/check', {
       tokensJson: JSON.parse(tokensJson) as unknown,
-      ...extra,
+    });
+  }
+
+  async call<T>(
+    tokensJson: string,
+    method: string,
+    params: Record<string, unknown>,
+  ): Promise<GarminDataResult<T>> {
+    return this.post<GarminDataResult<T>>('/call', {
+      tokensJson: JSON.parse(tokensJson) as unknown,
+      method,
+      params,
+    });
+  }
+
+  async connectApi<T>(
+    tokensJson: string,
+    httpMethod: ConnectApiHttpMethod,
+    path: string,
+    options?: { jsonBody?: unknown; queryParams?: Record<string, string> },
+  ): Promise<GarminDataResult<T>> {
+    return this.post<GarminDataResult<T>>('/connectapi', {
+      tokensJson: JSON.parse(tokensJson) as unknown,
+      httpMethod,
+      path,
+      jsonBody: options?.jsonBody,
+      queryParams: options?.queryParams,
     });
   }
 

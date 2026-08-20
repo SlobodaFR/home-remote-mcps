@@ -14,12 +14,22 @@ export interface GarminDataResult<T> {
   refreshedTokensJson?: string;
 }
 
+export type ConnectApiHttpMethod = 'GET' | 'PUT' | 'POST' | 'DELETE';
+
 /**
  * Port (driven side) implemented by the infrastructure layer. Talks to the
  * garmin-connector Python sidecar, which owns the actual Garmin Connect
  * login/session logic (garminconnect lib - handles MFA, token refresh).
  * `tokensJson` is an opaque blob: the backend never inspects it, only
  * encrypts/stores it and hands it back on each data call.
+ *
+ * `call` dispatches by name to one of the ~130 methods on the underlying
+ * `garminconnect.Garmin` client (see garmin-tools.ts for the allowlisted
+ * catalogue) - one generic method instead of one bespoke method per Garmin
+ * API endpoint. `connectApi` is a raw REST passthrough (mirrors what the
+ * garminconnect lib itself does internally) for the handful of Garmin
+ * Connect endpoints - mostly nutrition/food-logging - that have no
+ * high-level method in the library.
  */
 export abstract class GarminConnector {
   abstract startLogin(
@@ -36,28 +46,16 @@ export abstract class GarminConnector {
     tokensJson: string,
   ): Promise<GarminDataResult<{ valid: boolean }>>;
 
-  abstract getDailySteps(
+  abstract call<T>(
     tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>>;
-  abstract getSleep(
+    method: string,
+    params: Record<string, unknown>,
+  ): Promise<GarminDataResult<T>>;
+
+  abstract connectApi<T>(
     tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>>;
-  abstract getHeartRate(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>>;
-  abstract getBodyBattery(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>>;
-  abstract getStress(
-    tokensJson: string,
-    date: string,
-  ): Promise<GarminDataResult<Record<string, unknown>>>;
-  abstract getActivities(
-    tokensJson: string,
-    limit: number,
-  ): Promise<GarminDataResult<Record<string, unknown>[]>>;
+    httpMethod: ConnectApiHttpMethod,
+    path: string,
+    options?: { jsonBody?: unknown; queryParams?: Record<string, string> },
+  ): Promise<GarminDataResult<T>>;
 }

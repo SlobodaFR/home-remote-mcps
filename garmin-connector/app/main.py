@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel
@@ -22,12 +22,16 @@ class TokensOnlyRequest(BaseModel):
     tokensJson: dict[str, Any]
 
 
-class DateRequest(TokensOnlyRequest):
-    date: str
+class CallRequest(TokensOnlyRequest):
+    method: str
+    params: dict[str, Any] = {}
 
 
-class ActivitiesRequest(TokensOnlyRequest):
-    limit: int = 10
+class ConnectApiRequest(TokensOnlyRequest):
+    httpMethod: Literal["GET", "PUT", "POST", "DELETE"]
+    path: str
+    jsonBody: Any = None
+    queryParams: dict[str, str] | None = None
 
 
 @app.post("/login", dependencies=[Depends(require_internal_secret)])
@@ -45,34 +49,14 @@ def post_session_check(body: TokensOnlyRequest) -> dict[str, Any]:
     return data.check_session(body.tokensJson)
 
 
-@app.post("/data/steps", dependencies=[Depends(require_internal_secret)])
-def post_steps(body: DateRequest) -> dict[str, Any]:
-    return data.get_daily_steps(body.tokensJson, body.date)
+@app.post("/call", dependencies=[Depends(require_internal_secret)])
+def post_call(body: CallRequest) -> dict[str, Any]:
+    return data.call_method(body.tokensJson, body.method, body.params)
 
 
-@app.post("/data/sleep", dependencies=[Depends(require_internal_secret)])
-def post_sleep(body: DateRequest) -> dict[str, Any]:
-    return data.get_sleep(body.tokensJson, body.date)
-
-
-@app.post("/data/heart-rate", dependencies=[Depends(require_internal_secret)])
-def post_heart_rate(body: DateRequest) -> dict[str, Any]:
-    return data.get_heart_rate(body.tokensJson, body.date)
-
-
-@app.post("/data/body-battery", dependencies=[Depends(require_internal_secret)])
-def post_body_battery(body: DateRequest) -> dict[str, Any]:
-    return data.get_body_battery(body.tokensJson, body.date)
-
-
-@app.post("/data/stress", dependencies=[Depends(require_internal_secret)])
-def post_stress(body: DateRequest) -> dict[str, Any]:
-    return data.get_stress(body.tokensJson, body.date)
-
-
-@app.post("/data/activities", dependencies=[Depends(require_internal_secret)])
-def post_activities(body: ActivitiesRequest) -> dict[str, Any]:
-    return data.get_activities(body.tokensJson, body.limit)
+@app.post("/connectapi", dependencies=[Depends(require_internal_secret)])
+def post_connectapi(body: ConnectApiRequest) -> dict[str, Any]:
+    return data.connectapi_request(body.tokensJson, body.httpMethod, body.path, body.jsonBody, body.queryParams)
 
 
 @app.get("/health")
