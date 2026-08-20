@@ -9,6 +9,7 @@ import { AuthModule } from './interfaces/http/modules/auth.module';
 import { CredentialsModule } from './interfaces/http/modules/credentials.module';
 import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
 import { HomeAssistantMcpModule } from './interfaces/mcp/home-assistant-mcp.module';
+import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { HomeAssistantMcpModule } from './interfaces/mcp/home-assistant-mcp.modu
     ApiKeysModule,
     GarminMcpModule,
     HomeAssistantMcpModule,
+    YoutubeMcpModule,
   ],
 })
 export class AppModule {}

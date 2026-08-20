@@ -6,7 +6,12 @@ import {
   HttpCode,
   Param,
   Post,
+  Query,
+  Res,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
+import { CompleteYoutubeConnectionUseCase } from '../../../application/credentials/complete-youtube-connection.use-case';
 import { DeleteCredentialUseCase } from '../../../application/credentials/delete-credential.use-case';
 import { ListCredentialsUseCase } from '../../../application/credentials/list-credentials.use-case';
 import {
@@ -18,6 +23,10 @@ import {
   StartGarminLoginUseCase,
 } from '../../../application/credentials/start-garmin-login.use-case';
 import {
+  StartYoutubeConnectionResult,
+  StartYoutubeConnectionUseCase,
+} from '../../../application/credentials/start-youtube-connection.use-case';
+import {
   SubmitGarminMfaResult,
   SubmitGarminMfaUseCase,
 } from '../../../application/credentials/submit-garmin-mfa.use-case';
@@ -25,8 +34,10 @@ import {
   CurrentUser,
   CurrentUserPayload,
 } from '../decorators/current-user.decorator';
+import { Public } from '../decorators/public.decorator';
 import { SaveHomeAssistantConnectionDto } from '../dto/save-home-assistant-connection.dto';
 import { StartGarminLoginDto } from '../dto/start-garmin-login.dto';
+import { StartYoutubeConnectionDto } from '../dto/start-youtube-connection.dto';
 import { SubmitGarminMfaDto } from '../dto/submit-garmin-mfa.dto';
 import {
   CredentialDto,
@@ -40,7 +51,10 @@ export class CredentialsController {
     private readonly startGarminLogin: StartGarminLoginUseCase,
     private readonly submitGarminMfa: SubmitGarminMfaUseCase,
     private readonly saveHomeAssistantConnection: SaveHomeAssistantConnectionUseCase,
+    private readonly startYoutubeConnection: StartYoutubeConnectionUseCase,
+    private readonly completeYoutubeConnection: CompleteYoutubeConnectionUseCase,
     private readonly deleteCredential: DeleteCredentialUseCase,
+    private readonly config: ConfigService,
   ) {}
 
   @Get()
@@ -79,6 +93,46 @@ export class CredentialsController {
     );
   }
 
+  @Post('youtube/start')
+  async startYoutube(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: StartYoutubeConnectionDto,
+  ): Promise<StartYoutubeConnectionResult> {
+    return this.startYoutubeConnection.execute(
+      user.id,
+      dto.clientId,
+      dto.clientSecret,
+      this.youtubeCallbackUrl(),
+    );
+  }
+
+  @Public()
+  @Get('youtube/callback')
+  async youtubeCallback(
+    @Query('state') pendingId: string,
+    @Query('code') code: string,
+    @Query('error') error: string | undefined,
+    @Res() res: Response,
+  ): Promise<void> {
+    const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
+    if (error) {
+      res.redirect(
+        `${frontendUrl}/credentials?youtube=error&message=${encodeURIComponent(error)}`,
+      );
+      return;
+    }
+    const result = await this.completeYoutubeConnection.execute(
+      pendingId,
+      code,
+      this.youtubeCallbackUrl(),
+    );
+    res.redirect(
+      result.status === 'ok'
+        ? `${frontendUrl}/credentials?youtube=ok`
+        : `${frontendUrl}/credentials?youtube=error&message=${encodeURIComponent(result.message)}`,
+    );
+  }
+
   @Delete(':id')
   @HttpCode(204)
   async delete(
@@ -86,5 +140,12 @@ export class CredentialsController {
     @Param('id') id: string,
   ): Promise<void> {
     await this.deleteCredential.execute(user.id, id);
+  }
+
+  private youtubeCallbackUrl(): string {
+    return new URL(
+      '/api/credentials/youtube/callback',
+      this.config.getOrThrow<string>('PUBLIC_BASE_URL'),
+    ).toString();
   }
 }

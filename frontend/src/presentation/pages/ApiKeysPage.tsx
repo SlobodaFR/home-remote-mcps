@@ -75,8 +75,12 @@ export function ApiKeysPage() {
               {created.mcpUrl}
             </code>
             <p className="font-caption-sm text-mute mb-xs">Home Assistant</p>
-            <code className="block bg-canvas border border-hairline p-md">
+            <code className="block bg-canvas border border-hairline p-md mb-md">
               {created.homeAssistantMcpUrl}
+            </code>
+            <p className="font-caption-sm text-mute mb-xs">YouTube</p>
+            <code className="block bg-canvas border border-hairline p-md">
+              {created.youtubeMcpUrl}
             </code>
           </div>
         )}

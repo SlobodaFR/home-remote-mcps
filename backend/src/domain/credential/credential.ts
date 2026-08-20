@@ -76,6 +76,22 @@ export class Credential {
     return this.props.updatedAt;
   }
 
+  /**
+   * Stashes opaque, not-yet-validated material (e.g. a YouTube OAuth
+   * client ID/secret while waiting for the user to complete Google's
+   * consent screen) so it survives a redirect round-trip. Distinct from
+   * markValidated: status stays pending_mfa, not ok.
+   */
+  markPending(encryptedTokens: string, now: Date): void {
+    this.props = {
+      ...this.props,
+      status: 'pending_mfa',
+      encryptedTokens,
+      lastError: null,
+      updatedAt: now,
+    };
+  }
+
   markValidated(encryptedTokens: string, now: Date): void {
     this.props = {
       ...this.props,

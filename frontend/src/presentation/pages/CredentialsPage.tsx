@@ -10,7 +10,7 @@ interface Message {
 const STATUS_LABEL: Record<Credential['status'], string> = {
   ok: 'Connecte',
   failed: 'Echec',
-  pending_mfa: 'MFA en attente',
+  pending_mfa: 'En attente',
 };
 
 const STATUS_CLASS: Record<Credential['status'], string> = {
@@ -39,15 +39,40 @@ export function CredentialsPage() {
   const [haMessage, setHaMessage] = useState<Message | null>(null);
   const [haSubmitting, setHaSubmitting] = useState(false);
 
+  const [ytClientId, setYtClientId] = useState('');
+  const [ytClientSecret, setYtClientSecret] = useState('');
+  const [ytMessage, setYtMessage] = useState<Message | null>(null);
+  const [ytSubmitting, setYtSubmitting] = useState(false);
+
   const garmin = credentials.find((c) => c.service === 'garmin') ?? null;
   const homeAssistant =
     credentials.find((c) => c.service === 'home_assistant') ?? null;
+  const youtube = credentials.find((c) => c.service === 'youtube') ?? null;
 
   function reload() {
     apiClient.fetchCredentials().then(setCredentials).catch(console.error);
   }
 
   useEffect(reload, []);
+
+  // Google redirects back here after the consent screen (see
+  // CompleteYoutubeConnectionUseCase) - surface the result once, then strip
+  // the query string so a page refresh doesn't re-show it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const youtubeResult = params.get('youtube');
+    if (!youtubeResult) return;
+    setYtMessage(
+      youtubeResult === 'ok'
+        ? { kind: 'success', text: 'Connexion YouTube validee et stockee.' }
+        : {
+            kind: 'error',
+            text: params.get('message') ?? 'Erreur de connexion YouTube',
+          },
+    );
+    window.history.replaceState(null, '', window.location.pathname);
+    reload();
+  }, []);
 
   async function handleLogin() {
     setSubmitting(true);
@@ -147,6 +172,24 @@ export function CredentialsPage() {
     }
   }
 
+  async function handleConnectYoutube() {
+    setYtSubmitting(true);
+    setYtMessage(null);
+    try {
+      const result = await apiClient.startYoutubeConnection(
+        ytClientId,
+        ytClientSecret,
+      );
+      window.location.href = result.authorizeUrl;
+    } catch (error) {
+      setYtMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+      setYtSubmitting(false);
+    }
+  }
+
   function renderConnectedCard(label: string, credential: Credential | null) {
     if (!credential) return null;
     return (
@@ -185,10 +228,11 @@ export function CredentialsPage() {
     <main className="max-w-xl mx-auto px-xl py-section flex flex-col gap-section">
       <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
-        {garmin || homeAssistant ? (
+        {garmin || homeAssistant || youtube ? (
           <>
             {renderConnectedCard('Garmin Connect', garmin)}
             {renderConnectedCard('Home Assistant', homeAssistant)}
+            {renderConnectedCard('YouTube', youtube)}
           </>
         ) : (
           <p className="font-body-md text-mute">
@@ -324,6 +368,68 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${haMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {haMessage.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">
+          {youtube ? 'Mettre a jour YouTube' : 'Connecter YouTube'}
+        </h2>
+        <p className="font-body-md text-mute mb-md">
+          Cree un client OAuth 2.0 (type &quot;Application Web&quot;) sur la{' '}
+          <a
+            href="https://console.cloud.google.com/apis/credentials"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            Google Cloud Console
+          </a>
+          , active les APIs &quot;YouTube Data API v3&quot; et &quot;YouTube
+          Analytics API&quot;, puis ajoute cette URI de redirection autorisee:
+        </p>
+        <code className="block bg-soft-cloud p-md mb-lg font-caption-sm break-all">
+          {window.location.origin}/api/credentials/youtube/callback
+        </code>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectYoutube();
+          }}
+          className="flex flex-col gap-md"
+        >
+          <input
+            type="text"
+            required
+            placeholder="Client ID"
+            value={ytClientId}
+            onChange={(e) => setYtClientId(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="password"
+            required
+            placeholder="Client Secret"
+            value={ytClientSecret}
+            onChange={(e) => setYtClientSecret(e.target.value)}
+            className={inputClass}
+          />
+          <button
+            type="submit"
+            disabled={ytSubmitting}
+            className={primaryButtonClass}
+          >
+            {ytSubmitting ? 'Redirection...' : 'Continuer avec Google'}
+          </button>
+        </form>
+
+        {ytMessage && (
+          <p
+            className={`font-caption-md mt-md ${ytMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {ytMessage.text}
           </p>
         )}
       </section>

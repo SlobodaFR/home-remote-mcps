@@ -61,6 +61,11 @@ export type GarminLoginResponse =
 export type HomeAssistantConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
+export interface StartYoutubeConnectionResponse {
+  pendingId: string;
+  authorizeUrl: string;
+}
+
 export interface ApiKeySummary {
   id: string;
   label: string;
@@ -75,6 +80,7 @@ export interface CreatedApiKey {
   rawKey: string;
   mcpUrl: string;
   homeAssistantMcpUrl: string;
+  youtubeMcpUrl: string;
   createdAt: string;
 }
 
@@ -122,6 +128,16 @@ export const apiClient = {
       '/credentials/home-assistant',
       'POST',
       { baseUrl, token },
+    );
+  },
+  startYoutubeConnection(
+    clientId: string,
+    clientSecret: string,
+  ): Promise<StartYoutubeConnectionResponse> {
+    return sendJson<StartYoutubeConnectionResponse>(
+      '/credentials/youtube/start',
+      'POST',
+      { clientId, clientSecret },
     );
   },
   deleteCredential(id: string): Promise<void> {
