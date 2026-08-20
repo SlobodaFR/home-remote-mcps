@@ -11,6 +11,12 @@ export IMAGE
 export IMAGE_TAG
 export GARMIN_CONNECTOR_IMAGE
 
+# Images are public - no login needed to pull. Drop any stale/invalid
+# cached credential for ghcr.io first: docker prefers a cached credential
+# over anonymous access, so a leftover bad one from an earlier failed
+# login would keep blocking pulls of an otherwise-public image.
+docker logout ghcr.io >/dev/null 2>&1 || true
+
 docker compose pull
 docker compose up -d --remove-orphans
 docker image prune -f

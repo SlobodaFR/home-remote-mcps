@@ -42,7 +42,6 @@ jobs:
           MINIO_REGION: op://TECH/thomassloboda_home_secrets/MINIO_REGION
           MINIO_ACCESS_KEY_ID: op://TECH/thomassloboda_home_secrets/MINIO_ACCESS_KEY_ID
           MINIO_SECRET_ACCESS_KEY: op://TECH/thomassloboda_home_secrets/MINIO_SECRET_ACCESS_KEY
-          GHCR_PAT: op://TECH/thomassloboda_home_secrets/GITHUB_PAT_FULL_ACCESS
 
       - name: Normalize VPS_SSH_KEY
         # The 1Password field stores only the base64 body (no BEGIN/END
@@ -119,9 +118,8 @@ jobs:
           host: ${{ env.VPS_HOST }}
           username: ${{ env.VPS_USER }}
           key: ${{ env.VPS_SSH_KEY }}
-          envs: IMAGE,GARMIN_CONNECTOR_IMAGE,IMAGE_TAG,DEPLOY_DIR,GHCR_PAT,GHCR_USER
+          envs: IMAGE,GARMIN_CONNECTOR_IMAGE,IMAGE_TAG,DEPLOY_DIR
           script: |
-            echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             chmod +x /opt/remote-mcps/deploy/scripts/update-vps.sh
             sh /opt/remote-mcps/deploy/scripts/update-vps.sh
         env:
@@ -129,5 +127,3 @@ jobs:
           GARMIN_CONNECTOR_IMAGE: ghcr.io/slobodafr/home-remote-mcps-garmin-connector
           IMAGE_TAG: ${{ steps.tag.outputs.value }}
           DEPLOY_DIR: /opt/remote-mcps
-          GHCR_PAT: ${{ env.GHCR_PAT }}
-          GHCR_USER: ${{ github.repository_owner }}
