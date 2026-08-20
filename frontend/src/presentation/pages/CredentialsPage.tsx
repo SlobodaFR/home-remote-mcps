@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { apiClient, Credential } from '../../infrastructure/api-client';
 
 type Step = 'form' | 'mfa';
+interface Message {
+  kind: 'success' | 'error';
+  text: string;
+}
 
 const STATUS_LABEL: Record<Credential['status'], string> = {
   ok: 'Connecte',
@@ -27,13 +31,17 @@ export function CredentialsPage() {
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [message, setMessage] = useState<{
-    kind: 'success' | 'error';
-    text: string;
-  } | null>(null);
+  const [message, setMessage] = useState<Message | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [haBaseUrl, setHaBaseUrl] = useState('');
+  const [haToken, setHaToken] = useState('');
+  const [haMessage, setHaMessage] = useState<Message | null>(null);
+  const [haSubmitting, setHaSubmitting] = useState(false);
+
   const garmin = credentials.find((c) => c.service === 'garmin') ?? null;
+  const homeAssistant =
+    credentials.find((c) => c.service === 'home_assistant') ?? null;
 
   function reload() {
     apiClient.fetchCredentials().then(setCredentials).catch(console.error);
@@ -110,36 +118,78 @@ export function CredentialsPage() {
     reload();
   }
 
+  async function handleConnectHomeAssistant() {
+    setHaSubmitting(true);
+    setHaMessage(null);
+    try {
+      const result = await apiClient.saveHomeAssistantConnection(
+        haBaseUrl,
+        haToken,
+      );
+      if (result.status === 'ok') {
+        setHaMessage({
+          kind: 'success',
+          text: 'Connexion Home Assistant validee et stockee.',
+        });
+        setHaBaseUrl('');
+        setHaToken('');
+        reload();
+      } else {
+        setHaMessage({ kind: 'error', text: result.message });
+      }
+    } catch (error) {
+      setHaMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    } finally {
+      setHaSubmitting(false);
+    }
+  }
+
+  function renderConnectedCard(label: string, credential: Credential | null) {
+    if (!credential) return null;
+    return (
+      <div
+        key={credential.id}
+        className="bg-canvas border border-hairline p-xl flex items-center justify-between"
+      >
+        <div>
+          <div className="font-body-strong">{label}</div>
+          <div className={`font-caption-md ${STATUS_CLASS[credential.status]}`}>
+            {STATUS_LABEL[credential.status]}
+          </div>
+          {credential.lastError && (
+            <div className="font-caption-sm text-error mt-xs">
+              {credential.lastError}
+            </div>
+          )}
+          {credential.lastTestedAt && (
+            <div className="font-caption-sm text-mute mt-xs">
+              Dernier test:{' '}
+              {new Date(credential.lastTestedAt).toLocaleString('fr-FR')}
+            </div>
+          )}
+        </div>
+        <button
+          onClick={() => void handleDelete(credential.id)}
+          className="font-caption-md text-error hover:underline"
+        >
+          Supprimer
+        </button>
+      </div>
+    );
+  }
+
   return (
     <main className="max-w-xl mx-auto px-xl py-section flex flex-col gap-section">
-      <section>
+      <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
-        {garmin ? (
-          <div className="bg-canvas border border-hairline p-xl flex items-center justify-between">
-            <div>
-              <div className="font-body-strong">Garmin Connect</div>
-              <div className={`font-caption-md ${STATUS_CLASS[garmin.status]}`}>
-                {STATUS_LABEL[garmin.status]}
-              </div>
-              {garmin.lastError && (
-                <div className="font-caption-sm text-error mt-xs">
-                  {garmin.lastError}
-                </div>
-              )}
-              {garmin.lastTestedAt && (
-                <div className="font-caption-sm text-mute mt-xs">
-                  Dernier test:{' '}
-                  {new Date(garmin.lastTestedAt).toLocaleString('fr-FR')}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={() => void handleDelete(garmin.id)}
-              className="font-caption-md text-error hover:underline"
-            >
-              Supprimer
-            </button>
-          </div>
+        {garmin || homeAssistant ? (
+          <>
+            {renderConnectedCard('Garmin Connect', garmin)}
+            {renderConnectedCard('Home Assistant', homeAssistant)}
+          </>
         ) : (
           <p className="font-body-md text-mute">
             Aucun service connecte pour le moment.
@@ -220,6 +270,60 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${message.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {message.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">
+          {homeAssistant
+            ? 'Mettre a jour Home Assistant'
+            : 'Connecter Home Assistant'}
+        </h2>
+        <p className="font-body-md text-mute mb-lg">
+          URL de base de ton instance HAOS (ex:
+          https://mon-domicile.duckdns.org:8123 ou l&apos;URL distante Nabu
+          Casa) et un jeton d&apos;acces longue duree (Profil &gt; Securite &gt;
+          Jetons d&apos;acces de longue duree, dans Home Assistant).
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectHomeAssistant();
+          }}
+          className="flex flex-col gap-md"
+        >
+          <input
+            type="url"
+            required
+            placeholder="URL Home Assistant (ex: https://mon-domicile.duckdns.org:8123)"
+            value={haBaseUrl}
+            onChange={(e) => setHaBaseUrl(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="password"
+            required
+            placeholder="Jeton d'acces longue duree"
+            value={haToken}
+            onChange={(e) => setHaToken(e.target.value)}
+            className={inputClass}
+          />
+          <button
+            type="submit"
+            disabled={haSubmitting}
+            className={primaryButtonClass}
+          >
+            {haSubmitting ? 'Test en cours...' : 'Tester la connexion'}
+          </button>
+        </form>
+
+        {haMessage && (
+          <p
+            className={`font-caption-md mt-md ${haMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {haMessage.text}
           </p>
         )}
       </section>

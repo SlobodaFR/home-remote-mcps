@@ -49,6 +49,10 @@ export class ApiKeysController {
         `/api/mcp/garmin/${created.rawKey}`,
         publicUrl,
       ).toString(),
+      homeAssistantMcpUrl: new URL(
+        `/api/mcp/home-assistant/${created.rawKey}`,
+        publicUrl,
+      ).toString(),
       createdAt: created.createdAt.toISOString(),
     };
   }

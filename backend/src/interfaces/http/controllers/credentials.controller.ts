@@ -10,6 +10,10 @@ import {
 import { DeleteCredentialUseCase } from '../../../application/credentials/delete-credential.use-case';
 import { ListCredentialsUseCase } from '../../../application/credentials/list-credentials.use-case';
 import {
+  SaveHomeAssistantConnectionResult,
+  SaveHomeAssistantConnectionUseCase,
+} from '../../../application/credentials/save-home-assistant-connection.use-case';
+import {
   StartGarminLoginResult,
   StartGarminLoginUseCase,
 } from '../../../application/credentials/start-garmin-login.use-case';
@@ -21,6 +25,7 @@ import {
   CurrentUser,
   CurrentUserPayload,
 } from '../decorators/current-user.decorator';
+import { SaveHomeAssistantConnectionDto } from '../dto/save-home-assistant-connection.dto';
 import { StartGarminLoginDto } from '../dto/start-garmin-login.dto';
 import { SubmitGarminMfaDto } from '../dto/submit-garmin-mfa.dto';
 import {
@@ -34,6 +39,7 @@ export class CredentialsController {
     private readonly listCredentials: ListCredentialsUseCase,
     private readonly startGarminLogin: StartGarminLoginUseCase,
     private readonly submitGarminMfa: SubmitGarminMfaUseCase,
+    private readonly saveHomeAssistantConnection: SaveHomeAssistantConnectionUseCase,
     private readonly deleteCredential: DeleteCredentialUseCase,
   ) {}
 
@@ -59,6 +65,18 @@ export class CredentialsController {
     @Body() dto: SubmitGarminMfaDto,
   ): Promise<SubmitGarminMfaResult> {
     return this.submitGarminMfa.execute(user.id, dto.pendingId, dto.code);
+  }
+
+  @Post('home-assistant')
+  async connectHomeAssistant(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: SaveHomeAssistantConnectionDto,
+  ): Promise<SaveHomeAssistantConnectionResult> {
+    return this.saveHomeAssistantConnection.execute(
+      user.id,
+      dto.baseUrl,
+      dto.token,
+    );
   }
 
   @Delete(':id')

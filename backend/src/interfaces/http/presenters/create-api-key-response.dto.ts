@@ -3,7 +3,9 @@ export interface CreateApiKeyResponseDto {
   label: string;
   /** Shown once. Never recoverable afterwards - only a new key can be issued. */
   rawKey: string;
-  /** Ready-to-paste URL for Claude's "add custom connector" dialog. */
+  /** Ready-to-paste URL for Claude's "add custom connector" dialog (Garmin). */
   mcpUrl: string;
+  /** Same key, Home Assistant MCP endpoint - add as a second custom connector in Claude. */
+  homeAssistantMcpUrl: string;
   createdAt: string;
 }

@@ -8,6 +8,7 @@ import { ApiKeysModule } from './interfaces/http/modules/api-keys.module';
 import { AuthModule } from './interfaces/http/modules/auth.module';
 import { CredentialsModule } from './interfaces/http/modules/credentials.module';
 import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
+import { HomeAssistantMcpModule } from './interfaces/mcp/home-assistant-mcp.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
     CredentialsModule,
     ApiKeysModule,
     GarminMcpModule,
+    HomeAssistantMcpModule,
   ],
 })
 export class AppModule {}

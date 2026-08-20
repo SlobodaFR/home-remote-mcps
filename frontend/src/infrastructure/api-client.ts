@@ -58,6 +58,9 @@ export type GarminLoginResponse =
   | { status: 'mfa_required'; pendingId: string }
   | { status: 'error'; message: string };
 
+export type HomeAssistantConnectionResponse =
+  { status: 'ok' } | { status: 'error'; message: string };
+
 export interface ApiKeySummary {
   id: string;
   label: string;
@@ -71,6 +74,7 @@ export interface CreatedApiKey {
   label: string;
   rawKey: string;
   mcpUrl: string;
+  homeAssistantMcpUrl: string;
   createdAt: string;
 }
 
@@ -109,6 +113,16 @@ export const apiClient = {
       pendingId,
       code,
     });
+  },
+  saveHomeAssistantConnection(
+    baseUrl: string,
+    token: string,
+  ): Promise<HomeAssistantConnectionResponse> {
+    return sendJson<HomeAssistantConnectionResponse>(
+      '/credentials/home-assistant',
+      'POST',
+      { baseUrl, token },
+    );
   },
   deleteCredential(id: string): Promise<void> {
     return sendJson(`/credentials/${id}`, 'DELETE');

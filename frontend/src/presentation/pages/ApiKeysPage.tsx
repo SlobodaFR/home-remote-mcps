@@ -68,10 +68,15 @@ export function ApiKeysPage() {
         {created && (
           <div className="mt-lg bg-soft-cloud p-lg font-caption-md break-all">
             <p className="text-warning font-body-strong mb-sm">
-              Cette URL ne sera plus jamais affichee. Copie-la maintenant.
+              Ces URLs ne seront plus jamais affichees. Copie-les maintenant.
             </p>
-            <code className="block bg-canvas border border-hairline p-md">
+            <p className="font-caption-sm text-mute mb-xs">Garmin</p>
+            <code className="block bg-canvas border border-hairline p-md mb-md">
               {created.mcpUrl}
+            </code>
+            <p className="font-caption-sm text-mute mb-xs">Home Assistant</p>
+            <code className="block bg-canvas border border-hairline p-md">
+              {created.homeAssistantMcpUrl}
             </code>
           </div>
         )}
