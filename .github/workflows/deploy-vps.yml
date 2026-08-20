@@ -78,8 +78,8 @@ jobs:
           key: ${{ env.VPS_SSH_KEY }}
           envs: AUTH_SERVICE_URL,AUTH_CLIENT_ID,AUTH_CLIENT_SECRET,AUTH_WEBHOOK_SECRET,FRONTEND_URL,CREDENTIALS_ENCRYPTION_KEY,GARMIN_CONNECTOR_SECRET,DATABASE_PATH,MINIO_ENDPOINT,MINIO_BUCKET,MINIO_REPLICA_PATH,MINIO_REGION,MINIO_ACCESS_KEY_ID,MINIO_SECRET_ACCESS_KEY
           script: |
-            mkdir -p /opt/home-remote-mcps/deploy
-            cat > /opt/home-remote-mcps/deploy/.env <<EOF
+            mkdir -p /opt/remote-mcps/deploy
+            cat > /opt/remote-mcps/deploy/.env <<EOF
             NODE_ENV=production
             PORT=3000
             DATABASE_PATH=$DATABASE_PATH
@@ -99,7 +99,7 @@ jobs:
             MINIO_ACCESS_KEY_ID=$MINIO_ACCESS_KEY_ID
             MINIO_SECRET_ACCESS_KEY=$MINIO_SECRET_ACCESS_KEY
             EOF
-            cat > /opt/home-remote-mcps/deploy/garmin-connector.env <<EOF
+            cat > /opt/remote-mcps/deploy/garmin-connector.env <<EOF
             GARMIN_CONNECTOR_SECRET=$GARMIN_CONNECTOR_SECRET
             EOF
 
@@ -110,7 +110,7 @@ jobs:
           username: ${{ env.VPS_USER }}
           key: ${{ env.VPS_SSH_KEY }}
           source: 'deploy/docker-compose.yml,deploy/scripts/update-vps.sh,deploy/Caddyfile'
-          target: /opt/home-remote-mcps
+          target: /opt/remote-mcps
           strip_components: 0
 
       - name: Deploy via SSH
@@ -122,12 +122,12 @@ jobs:
           envs: IMAGE,GARMIN_CONNECTOR_IMAGE,IMAGE_TAG,DEPLOY_DIR,GHCR_PAT,GHCR_USER
           script: |
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-            chmod +x /opt/home-remote-mcps/deploy/scripts/update-vps.sh
-            sh /opt/home-remote-mcps/deploy/scripts/update-vps.sh
+            chmod +x /opt/remote-mcps/deploy/scripts/update-vps.sh
+            sh /opt/remote-mcps/deploy/scripts/update-vps.sh
         env:
           IMAGE: ghcr.io/slobodafr/home-remote-mcps
           GARMIN_CONNECTOR_IMAGE: ghcr.io/slobodafr/home-remote-mcps-garmin-connector
           IMAGE_TAG: ${{ steps.tag.outputs.value }}
-          DEPLOY_DIR: /opt/home-remote-mcps
+          DEPLOY_DIR: /opt/remote-mcps
           GHCR_PAT: ${{ env.GHCR_PAT }}
           GHCR_USER: ${{ github.repository_owner }}

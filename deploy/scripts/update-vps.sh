@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/home-remote-mcps}"
+DEPLOY_DIR="${DEPLOY_DIR:-/opt/remote-mcps}"
 IMAGE="${IMAGE:-ghcr.io/slobodafr/home-remote-mcps}"
 GARMIN_CONNECTOR_IMAGE="${GARMIN_CONNECTOR_IMAGE:-ghcr.io/slobodafr/home-remote-mcps-garmin-connector}"
 
