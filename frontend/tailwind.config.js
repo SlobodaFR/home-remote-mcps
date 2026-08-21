@@ -1,22 +1,23 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+  darkMode: 'media',
   theme: {
     extend: {
       colors: {
-        ink: '#111111',
-        'on-primary': '#ffffff',
-        canvas: '#ffffff',
-        surface: '#ffffff',
-        'soft-cloud': '#f5f5f5',
-        charcoal: '#39393b',
-        mute: '#707072',
-        stone: '#9e9ea0',
-        hairline: '#cacacb',
-        'hairline-soft': '#e5e5e5',
-        success: '#007d48',
-        error: '#d30005',
-        warning: '#a15c00',
+        ink: 'var(--color-ink)',
+        'on-primary': 'var(--color-on-primary)',
+        canvas: 'var(--color-canvas)',
+        surface: 'var(--color-canvas)',
+        'soft-cloud': 'var(--color-soft-cloud)',
+        charcoal: 'var(--color-charcoal)',
+        mute: 'var(--color-mute)',
+        stone: 'var(--color-stone)',
+        hairline: 'var(--color-hairline)',
+        'hairline-soft': 'var(--color-hairline-soft)',
+        success: 'var(--color-success)',
+        error: 'var(--color-error)',
+        warning: 'var(--color-warning)',
       },
       borderRadius: {
         none: '0px',

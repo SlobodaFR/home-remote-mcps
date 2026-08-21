@@ -1,6 +1,6 @@
 export function LoginPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-xl bg-soft-cloud">
+    <main className="min-h-[100dvh] flex items-center justify-center px-lg bg-soft-cloud">
       <div className="w-full max-w-sm flex flex-col items-center gap-xl text-center">
         <h1 className="font-display uppercase text-display-campaign text-ink">
           Home MCPs

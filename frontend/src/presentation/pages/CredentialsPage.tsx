@@ -195,7 +195,7 @@ export function CredentialsPage() {
     return (
       <div
         key={credential.id}
-        className="bg-canvas border border-hairline p-xl flex items-center justify-between"
+        className="bg-canvas border border-hairline p-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-md"
       >
         <div>
           <div className="font-body-strong">{label}</div>
@@ -216,7 +216,7 @@ export function CredentialsPage() {
         </div>
         <button
           onClick={() => void handleDelete(credential.id)}
-          className="font-caption-md text-error hover:underline"
+          className="self-start font-caption-md text-error hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
         >
           Supprimer
         </button>
@@ -225,7 +225,7 @@ export function CredentialsPage() {
   }
 
   return (
-    <main className="max-w-xl mx-auto px-xl py-section flex flex-col gap-section">
+    <main className="max-w-xl mx-auto px-lg sm:px-xl py-xl sm:py-section flex flex-col gap-xl sm:gap-section">
       <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
         {garmin || homeAssistant || youtube ? (

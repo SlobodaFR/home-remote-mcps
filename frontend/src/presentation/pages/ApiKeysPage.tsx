@@ -41,14 +41,17 @@ export function ApiKeysPage() {
   }
 
   return (
-    <main className="max-w-xl mx-auto px-xl py-section flex flex-col gap-section">
+    <main className="max-w-xl mx-auto px-lg sm:px-xl py-xl sm:py-section flex flex-col gap-xl sm:gap-section">
       <section className="bg-canvas border border-hairline p-xl">
         <h2 className="font-heading-lg mb-xs">Nouvelle cle API</h2>
         <p className="font-body-md text-mute mb-lg">
           Colle l&apos;URL generee dans Claude (Parametres &gt; Connecteurs &gt;
           Ajouter un connecteur personnalise).
         </p>
-        <form onSubmit={(e) => void handleCreate(e)} className="flex gap-md">
+        <form
+          onSubmit={(e) => void handleCreate(e)}
+          className="flex flex-col sm:flex-row gap-md"
+        >
           <input
             type="text"
             placeholder="Nom (ex: Claude mobile)"
@@ -92,7 +95,7 @@ export function ApiKeysPage() {
           {keys.map((key) => (
             <li
               key={key.id}
-              className="bg-canvas border border-hairline p-md flex items-center justify-between font-caption-md"
+              className="bg-canvas border border-hairline p-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm font-caption-md"
             >
               <div>
                 <div className="font-body-strong">{key.label}</div>
@@ -107,7 +110,7 @@ export function ApiKeysPage() {
               {!key.revokedAt && (
                 <button
                   onClick={() => void handleRevoke(key.id)}
-                  className="text-error hover:underline"
+                  className="self-start text-error hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
                 >
                   Revoquer
                 </button>
