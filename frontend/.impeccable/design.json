@@ -1,0 +1,333 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-21T00:00:00.000Z",
+  "title": "Design System: Home Remote MCPs",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Carbon Ink",
+        "canonical": "#111111",
+        "tonalRamp": [
+          "#0a0a0a",
+          "#1c1c1c",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#b0b0b0",
+          "#d6d6d6"
+        ]
+      },
+      "on-primary": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#1c1c1c",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#ffffff"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas Paper",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#1c1c1c",
+          "#333333",
+          "#4d4d4d",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#ffffff"
+        ]
+      },
+      "soft-cloud": {
+        "role": "neutral",
+        "displayName": "Soft Cloud",
+        "canonical": "#f5f5f5",
+        "tonalRamp": [
+          "#141414",
+          "#282828",
+          "#3d3d3d",
+          "#565656",
+          "#787878",
+          "#a3a3a3",
+          "#d4d4d4",
+          "#f5f5f5"
+        ]
+      },
+      "charcoal": {
+        "role": "neutral",
+        "displayName": "Charcoal (reserved)",
+        "canonical": "#39393b",
+        "tonalRamp": [
+          "#0e0e0f",
+          "#1e1e1f",
+          "#2e2e30",
+          "#39393b",
+          "#5c5c5e",
+          "#828284",
+          "#aeaeb0",
+          "#dcdcdd"
+        ]
+      },
+      "mute": {
+        "role": "neutral",
+        "displayName": "Mute Grey",
+        "canonical": "#707072",
+        "tonalRamp": [
+          "#1c1c1d",
+          "#333334",
+          "#4c4c4d",
+          "#707072",
+          "#8c8c8e",
+          "#aaaaac",
+          "#c9c9ca",
+          "#e8e8e9"
+        ]
+      },
+      "stone": {
+        "role": "neutral",
+        "displayName": "Stone (reserved)",
+        "canonical": "#9e9ea0",
+        "tonalRamp": [
+          "#2a2a2b",
+          "#454547",
+          "#616163",
+          "#7d7d7f",
+          "#9e9ea0",
+          "#bcbcbd",
+          "#dadadb",
+          "#f0f0f0"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline Border",
+        "canonical": "#cacacb",
+        "tonalRamp": [
+          "#3a3a3b",
+          "#525253",
+          "#6c6c6d",
+          "#87878a",
+          "#a3a3a5",
+          "#c0c0c1",
+          "#cacacb",
+          "#e2e2e3"
+        ]
+      },
+      "hairline-soft": {
+        "role": "neutral",
+        "displayName": "Hairline Soft (reserved)",
+        "canonical": "#e5e5e5",
+        "tonalRamp": [
+          "#3a3a3b",
+          "#525253",
+          "#6c6c6d",
+          "#87878a",
+          "#a3a3a5",
+          "#c9c9c9",
+          "#e5e5e5",
+          "#f4f4f4"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Vault Green",
+        "canonical": "#007d48",
+        "tonalRamp": [
+          "#00301b",
+          "#00542e",
+          "#007a45",
+          "#12a866",
+          "#55c895",
+          "#9ce0c0",
+          "#c8eeda",
+          "#eafbf3"
+        ]
+      },
+      "error": {
+        "role": "secondary",
+        "displayName": "Alert Red",
+        "canonical": "#d30005",
+        "tonalRamp": [
+          "#3a0001",
+          "#6b0003",
+          "#9c0004",
+          "#d30005",
+          "#f23a35",
+          "#f97e7a",
+          "#fcb3b0",
+          "#fde5e4"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Pending Amber",
+        "canonical": "#a15c00",
+        "tonalRamp": [
+          "#2b1800",
+          "#4d2b00",
+          "#703f00",
+          "#a15c00",
+          "#d68300",
+          "#f5ab2e",
+          "#fbcd85",
+          "#fdecc9"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Login hero headline only ('Home MCPs'). Never a section heading."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "Persistent header brand mark - Anton at 16-18px, uppercase, tight tracking. Distinct from Display, not a scale step."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Reserved 32px Inter step; not yet drawn on by any current screen."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Every in-app section <h2> - the actual day-to-day heading weight."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraph copy and helper text."
+      },
+      "body-strong": {
+        "displayName": "Body Strong",
+        "purpose": "Weight-shifted emphasis inline - credential/key labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Status text and secondary metadata rows."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Fine print - timestamps, hints, code-block URL text."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [{ "name": "sm", "value": "640px" }]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Full-pill primary action - form submits, login CTA, key generation.",
+      "html": "<button class=\"ds-btn-primary\">Tester la connexion</button>",
+      "css": ".ds-btn-primary { background: var(--color-ink); color: var(--color-on-primary); font-family: Inter, sans-serif; font-size: 16px; font-weight: 500; line-height: 1.5; height: 48px; padding: 0 24px; border: none; border-radius: 9999px; cursor: pointer; } .ds-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; } .ds-btn-primary:focus-visible { outline: 2px solid var(--color-ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Destructive Text Button",
+      "kind": "button",
+      "refersTo": "button-ghost-destructive",
+      "description": "No fill, no border - text-only action for Supprimer/Revoquer.",
+      "html": "<button class=\"ds-btn-ghost-destructive\">Supprimer</button>",
+      "css": ".ds-btn-ghost-destructive { background: none; border: none; color: var(--color-error); font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; line-height: 1.5; padding: 4px 8px; margin: -4px -8px; border-radius: 4px; cursor: pointer; } .ds-btn-ghost-destructive:hover { text-decoration: underline; } .ds-btn-ghost-destructive:focus-visible { outline: 2px solid var(--color-error); outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Placeholder-as-label field - no separate <label> element exists on any current form.",
+      "html": "<input class=\"ds-input\" type=\"email\" placeholder=\"Email Garmin\" />",
+      "css": ".ds-input { background: var(--color-soft-cloud); color: var(--color-ink); font-family: Inter, sans-serif; font-size: 16px; line-height: 1.5; padding: 8px 12px; border: none; border-radius: 24px; outline: none; width: 100%; } .ds-input::placeholder { color: var(--color-mute); } .ds-input:focus { box-shadow: 0 0 0 2px var(--color-ink); }"
+    },
+    {
+      "name": "Card / Section",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Sharp-cornered, hairline-bordered container - the only container shape in the system.",
+      "html": "<section class=\"ds-card\"><h2 class=\"ds-card-title\">Connecter Garmin</h2></section>",
+      "css": ".ds-card { background: var(--color-canvas); border: 1px solid var(--color-hairline); border-radius: 0; padding: 24px; } .ds-card-title { color: var(--color-ink); font-family: Inter, sans-serif; font-size: 24px; font-weight: 500; line-height: 1.2; margin: 0; }"
+    },
+    {
+      "name": "Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Active state is a 2px ink underline; inactive is mute text on a transparent underline.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" class=\"ds-nav-link ds-nav-link--active\">Credentials</a><a href=\"#\" class=\"ds-nav-link\">Cles API</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 18px; } .ds-nav-link { font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; color: var(--color-mute); text-decoration: none; padding-bottom: 4px; border-bottom: 2px solid transparent; } .ds-nav-link:hover { color: var(--color-ink); } .ds-nav-link--active { color: var(--color-ink); border-bottom-color: var(--color-ink); }"
+    },
+    {
+      "name": "Status Label",
+      "kind": "custom",
+      "refersTo": "status-label",
+      "description": "Text-only status indicator - no chip/background, color alone carries state.",
+      "html": "<div class=\"ds-status-label ds-status-label--success\">Connecte</div>",
+      "css": ".ds-status-label { font-family: Inter, sans-serif; font-size: 14px; font-weight: 500; line-height: 1.5; } .ds-status-label--success { color: var(--color-success); } .ds-status-label--error { color: var(--color-error); } .ds-status-label--warning { color: var(--color-warning); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Utility Vault",
+    "overview": "This is not a product being sold to strangers - it is personal infrastructure, visited briefly and rarely, whose entire job is custody: storing credentials for services that don't offer a clean way to be reached by an MCP client, and minting the API keys that let a client reach them. Every decision in this system serves that framing. There is no brand accent color because there is nothing to sell; the palette is Carbon & Paper - near-black ink on white and off-white paper, the same restraint as a receipt or a ledger, not a screen-native gradient world. Where the system does allow itself softness - the full-pill buttons, the 24px-radius inputs - it reads as approachable rather than decorative: Soft and approachable controls sitting inside sharp, flat, hairline-bordered containers. The one deliberately loud gesture is the Anton wordmark, used at two completely different scales (a tiny uppercase brand mark in the header, a massive 64px campaign headline on login) and nowhere else - display type is rationed, not a general-purpose headline font.",
+    "keyCharacteristics": [
+      "Fully neutral palette: no brand hue, only ink/canvas/soft-cloud grays plus three semantic status colors (success/error/warning).",
+      "Flat by construction: zero shadows anywhere in the implementation; depth comes from a two-step background lightness (soft-cloud page -> canvas card) plus 1px hairline borders.",
+      "Two-register shape language: structural containers (cards, code blocks) are sharp (0px radius); every interactive control (buttons, inputs) is heavily rounded (24px inputs, full-pill buttons).",
+      "Display type (Anton) is rationed to exactly two roles - the persistent brand wordmark and the login hero headline - never a general section-heading font.",
+      "Single breakpoint: sm (640px) is the only responsive boundary used anywhere in the app.",
+      "Dark mode is a first-class, system-driven inversion of the same neutral family (off-black/off-white, never pure), not a separate design."
+    ],
+    "rules": [
+      {
+        "name": "The No-Accent Rule",
+        "body": "There is no brand color. Every non-neutral pixel in this system is a semantic status color (success/error/warning) carrying real state, never decoration. Introducing a brand accent is a product decision, not a styling one - it would contradict \"The Utility Vault\" framing.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dark Mode Is Not Optional Rule",
+        "body": "Every color token ships a dark counterpart, driven purely by prefers-color-scheme (no manual toggle exists). A new token without a dark value is an incomplete token, not a follow-up.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rationed Display Rule",
+        "body": "Anton appears in exactly two places on any screen: the persistent header wordmark and (on /login only) the hero headline. It is never a general section-heading font - every <h2> in the authenticated app is Inter Title, not Anton.",
+        "section": "typography"
+      },
+      {
+        "name": "The Single Breakpoint Rule",
+        "body": "sm (640px) is the only responsive boundary in the app. There is no md/lg/xl behavior anywhere - a screen is either \"narrow\" or \"not narrow.\"",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Surfaces never cast shadows. If a future component needs elevation, express it as another background-lightness step plus a hairline border, not a box-shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Structure-vs-Action Rule",
+        "body": "If it holds content, it's sharp. If you can click, type into, or press it, it's heavily rounded. A rounded card or a sharp-cornered button would both be off-system.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do keep Anton rationed to the header wordmark and the login hero - never use it for an in-app section heading (Title / Inter / 24px owns that job).",
+      "Do pair every new color token with its dark-mode counterpart in the same change - dark mode is system-driven and always-on, not an opt-in surface.",
+      "Do keep structural containers sharp and interactive controls rounded - the two registers are the system's shape language, not an inconsistency to reconcile.",
+      "Do collapse a content+action row to flex-col below sm whenever the row can plausibly overflow on a narrow viewport - the credential cards and API key rows already establish this pattern.",
+      "Do use a plain colored status word for state, not a background pill/badge - matches the existing Status Label pattern."
+    ],
+    "donts": [
+      "Don't introduce a brand accent color. The No-Accent Rule is deliberate, not an oversight to fix.",
+      "Don't add box-shadow anywhere. Depth is background-lightness + hairline border only.",
+      "Don't add a second responsive breakpoint (md/lg/xl) without a concrete layout that needs it - the app has stayed on a single sm boundary by design, not by omission.",
+      "Don't round a card/container or sharpen a button/input - it breaks the Structure-vs-Action Rule and reads as an inconsistency, not a variation."
+    ]
+  }
+}
