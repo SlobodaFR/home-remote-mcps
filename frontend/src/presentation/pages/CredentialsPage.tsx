@@ -39,6 +39,10 @@ export function CredentialsPage() {
   const [haMessage, setHaMessage] = useState<Message | null>(null);
   const [haSubmitting, setHaSubmitting] = useState(false);
 
+  const [healthApiKey, setHealthApiKey] = useState('');
+  const [healthMessage, setHealthMessage] = useState<Message | null>(null);
+  const [healthSubmitting, setHealthSubmitting] = useState(false);
+
   const [ytClientId, setYtClientId] = useState('');
   const [ytClientSecret, setYtClientSecret] = useState('');
   const [ytMessage, setYtMessage] = useState<Message | null>(null);
@@ -47,6 +51,8 @@ export function CredentialsPage() {
   const garmin = credentials.find((c) => c.service === 'garmin') ?? null;
   const homeAssistant =
     credentials.find((c) => c.service === 'home_assistant') ?? null;
+  const personalHealth =
+    credentials.find((c) => c.service === 'personal_health') ?? null;
   const youtube = credentials.find((c) => c.service === 'youtube') ?? null;
 
   function reload() {
@@ -172,6 +178,31 @@ export function CredentialsPage() {
     }
   }
 
+  async function handleConnectPersonalHealth() {
+    setHealthSubmitting(true);
+    setHealthMessage(null);
+    try {
+      const result = await apiClient.savePersonalHealthConnection(healthApiKey);
+      if (result.status === 'ok') {
+        setHealthMessage({
+          kind: 'success',
+          text: 'Connexion Donnees de sante validee et stockee.',
+        });
+        setHealthApiKey('');
+        reload();
+      } else {
+        setHealthMessage({ kind: 'error', text: result.message });
+      }
+    } catch (error) {
+      setHealthMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    } finally {
+      setHealthSubmitting(false);
+    }
+  }
+
   async function handleConnectYoutube() {
     setYtSubmitting(true);
     setYtMessage(null);
@@ -228,10 +259,11 @@ export function CredentialsPage() {
     <main className="max-w-xl mx-auto px-lg sm:px-xl py-xl sm:py-section flex flex-col gap-xl sm:gap-section">
       <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
-        {garmin || homeAssistant || youtube ? (
+        {garmin || homeAssistant || personalHealth || youtube ? (
           <>
             {renderConnectedCard('Garmin Connect', garmin)}
             {renderConnectedCard('Home Assistant', homeAssistant)}
+            {renderConnectedCard('Donnees de sante', personalHealth)}
             {renderConnectedCard('YouTube', youtube)}
           </>
         ) : (
@@ -368,6 +400,59 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${haMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {haMessage.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">
+          {personalHealth
+            ? 'Mettre a jour Donnees de sante'
+            : 'Connecter Donnees de sante'}
+        </h2>
+        <p className="font-body-md text-mute mb-lg">
+          Cle API issue de{' '}
+          <a
+            href="https://health.sloboda.fr"
+            target="_blank"
+            rel="noreferrer"
+            className="underline"
+          >
+            health.sloboda.fr
+          </a>{' '}
+          (genere-la depuis ton compte sur ce service, section cles API), pour
+          relier ton compte remote-mcps a tes donnees Apple Health.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectPersonalHealth();
+          }}
+          className="flex flex-col gap-md"
+        >
+          <input
+            type="password"
+            required
+            placeholder="Cle API health.sloboda.fr"
+            value={healthApiKey}
+            onChange={(e) => setHealthApiKey(e.target.value)}
+            className={inputClass}
+          />
+          <button
+            type="submit"
+            disabled={healthSubmitting}
+            className={primaryButtonClass}
+          >
+            {healthSubmitting ? 'Test en cours...' : 'Tester la connexion'}
+          </button>
+        </form>
+
+        {healthMessage && (
+          <p
+            className={`font-caption-md mt-md ${healthMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {healthMessage.text}
           </p>
         )}
       </section>

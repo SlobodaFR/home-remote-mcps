@@ -7,6 +7,8 @@ export interface CreateApiKeyResponseDto {
   mcpUrl: string;
   /** Same key, Home Assistant MCP endpoint - add as a second custom connector in Claude. */
   homeAssistantMcpUrl: string;
+  /** Same key, personal-health (health.sloboda.fr) MCP endpoint - add as another custom connector in Claude. */
+  personalHealthMcpUrl: string;
   /** Same key, YouTube MCP endpoint - add as another custom connector in Claude. */
   youtubeMcpUrl: string;
   createdAt: string;

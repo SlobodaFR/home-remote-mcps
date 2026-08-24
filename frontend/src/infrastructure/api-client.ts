@@ -61,6 +61,9 @@ export type GarminLoginResponse =
 export type HomeAssistantConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
+export type PersonalHealthConnectionResponse =
+  { status: 'ok' } | { status: 'error'; message: string };
+
 export interface StartYoutubeConnectionResponse {
   pendingId: string;
   authorizeUrl: string;
@@ -80,6 +83,7 @@ export interface CreatedApiKey {
   rawKey: string;
   mcpUrl: string;
   homeAssistantMcpUrl: string;
+  personalHealthMcpUrl: string;
   youtubeMcpUrl: string;
   createdAt: string;
 }
@@ -128,6 +132,15 @@ export const apiClient = {
       '/credentials/home-assistant',
       'POST',
       { baseUrl, token },
+    );
+  },
+  savePersonalHealthConnection(
+    apiKey: string,
+  ): Promise<PersonalHealthConnectionResponse> {
+    return sendJson<PersonalHealthConnectionResponse>(
+      '/credentials/personal-health',
+      'POST',
+      { apiKey },
     );
   },
   startYoutubeConnection(

@@ -9,6 +9,7 @@ import { AuthModule } from './interfaces/http/modules/auth.module';
 import { CredentialsModule } from './interfaces/http/modules/credentials.module';
 import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
 import { HomeAssistantMcpModule } from './interfaces/mcp/home-assistant-mcp.module';
+import { PersonalHealthMcpModule } from './interfaces/mcp/personal-health-mcp.module';
 import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
     ApiKeysModule,
     GarminMcpModule,
     HomeAssistantMcpModule,
+    PersonalHealthMcpModule,
     YoutubeMcpModule,
   ],
 })
