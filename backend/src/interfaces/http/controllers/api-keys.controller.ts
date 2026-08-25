@@ -53,6 +53,10 @@ export class ApiKeysController {
         `/api/mcp/home-assistant/${created.rawKey}`,
         publicUrl,
       ).toString(),
+      logsMcpUrl: new URL(
+        `/api/mcp/logs/${created.rawKey}`,
+        publicUrl,
+      ).toString(),
       personalHealthMcpUrl: new URL(
         `/api/mcp/personal-health/${created.rawKey}`,
         publicUrl,

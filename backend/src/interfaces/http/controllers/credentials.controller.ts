@@ -19,6 +19,10 @@ import {
   SaveHomeAssistantConnectionUseCase,
 } from '../../../application/credentials/save-home-assistant-connection.use-case';
 import {
+  SaveLogsConnectionResult,
+  SaveLogsConnectionUseCase,
+} from '../../../application/credentials/save-logs-connection.use-case';
+import {
   SavePersonalHealthConnectionResult,
   SavePersonalHealthConnectionUseCase,
 } from '../../../application/credentials/save-personal-health-connection.use-case';
@@ -40,6 +44,7 @@ import {
 } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
 import { SaveHomeAssistantConnectionDto } from '../dto/save-home-assistant-connection.dto';
+import { SaveLogsConnectionDto } from '../dto/save-logs-connection.dto';
 import { SavePersonalHealthConnectionDto } from '../dto/save-personal-health-connection.dto';
 import { StartGarminLoginDto } from '../dto/start-garmin-login.dto';
 import { StartYoutubeConnectionDto } from '../dto/start-youtube-connection.dto';
@@ -56,6 +61,7 @@ export class CredentialsController {
     private readonly startGarminLogin: StartGarminLoginUseCase,
     private readonly submitGarminMfa: SubmitGarminMfaUseCase,
     private readonly saveHomeAssistantConnection: SaveHomeAssistantConnectionUseCase,
+    private readonly saveLogsConnection: SaveLogsConnectionUseCase,
     private readonly savePersonalHealthConnection: SavePersonalHealthConnectionUseCase,
     private readonly startYoutubeConnection: StartYoutubeConnectionUseCase,
     private readonly completeYoutubeConnection: CompleteYoutubeConnectionUseCase,
@@ -97,6 +103,14 @@ export class CredentialsController {
       dto.baseUrl,
       dto.token,
     );
+  }
+
+  @Post('logs')
+  async connectLogs(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: SaveLogsConnectionDto,
+  ): Promise<SaveLogsConnectionResult> {
+    return this.saveLogsConnection.execute(user.id, dto.basePath);
   }
 
   @Post('personal-health')

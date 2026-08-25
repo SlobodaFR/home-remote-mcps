@@ -1,8 +1,9 @@
 # home-remote-mcps
 
-Personal remote MCP gateway. Exposes Garmin Connect, Home Assistant, and YouTube as [Model
-Context Protocol](https://modelcontextprotocol.io) servers reachable over HTTP, so Claude (or any
-MCP client) can query and control them from anywhere — no local server, no local credentials.
+Personal remote MCP gateway. Exposes Garmin Connect, Home Assistant, YouTube, personal health
+data, and Docker container logs (shipped to MinIO by Vector) as [Model Context
+Protocol](https://modelcontextprotocol.io) servers reachable over HTTP, so Claude (or any MCP
+client) can query and control them from anywhere — no local server, no local credentials.
 
 Authentication for the web UI is delegated to an external SSO (`home-auth`, OAuth2). MCP clients
 authenticate separately with a per-user API key issued from that UI.
@@ -13,8 +14,9 @@ Garmin Connect has no official public API and no actively maintained Node client
 `garmin-connector` service is a small internal-only Python sidecar wrapping the
 [`garminconnect`](https://pypi.org/project/garminconnect/) library, which handles Garmin's login
 flow (including MFA) and token refresh. The NestJS backend talks to it over the Docker network
-with a shared secret; it is never exposed publicly. Home Assistant and YouTube have normal REST
-APIs, so the backend talks to them directly.
+with a shared secret; it is never exposed publicly. Every other integration — Home Assistant,
+YouTube, personal health, and logs — has a normal REST (or S3-compatible) API, so the backend
+talks to them directly with no sidecar.
 
 ## Project layout
 

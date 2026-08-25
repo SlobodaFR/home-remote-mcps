@@ -4,6 +4,7 @@ import { CompleteYoutubeConnectionUseCase } from '../../../application/credentia
 import { DeleteCredentialUseCase } from '../../../application/credentials/delete-credential.use-case';
 import { ListCredentialsUseCase } from '../../../application/credentials/list-credentials.use-case';
 import { SaveHomeAssistantConnectionUseCase } from '../../../application/credentials/save-home-assistant-connection.use-case';
+import { SaveLogsConnectionUseCase } from '../../../application/credentials/save-logs-connection.use-case';
 import { SavePersonalHealthConnectionUseCase } from '../../../application/credentials/save-personal-health-connection.use-case';
 import { StartGarminLoginUseCase } from '../../../application/credentials/start-garmin-login.use-case';
 import { StartYoutubeConnectionUseCase } from '../../../application/credentials/start-youtube-connection.use-case';
@@ -22,6 +23,7 @@ import { CredentialsController } from '../controllers/credentials.controller';
     StartGarminLoginUseCase,
     SubmitGarminMfaUseCase,
     SaveHomeAssistantConnectionUseCase,
+    SaveLogsConnectionUseCase,
     SavePersonalHealthConnectionUseCase,
     StartYoutubeConnectionUseCase,
     CompleteYoutubeConnectionUseCase,

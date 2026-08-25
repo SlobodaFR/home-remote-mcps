@@ -43,6 +43,34 @@ Same dispatch-table shape as Garmin but hand-written (much smaller surface): one
 supported `action`, handler calls `gateway.call(userId, action, params)`. Covers video/playlist
 CRUD, comments, channel/analytics reads, and `youtube_upload_video`.
 
+## Personal health (`personal-health-tools.ts`, ~275 lines)
+
+Same "generic-first" shape as Home Assistant, over a smaller API: mostly `GET
+/api/health/<apiKey>/<resource>` reads (metrics, workouts, symptoms, ECG, heart-rate
+notifications, state-of-mind, cycle-tracking, medications), each taking an optional
+`from`/`to`/`limit` range. `personal-health-tool-runtime.ts` factors out the same
+"load credentials, call gateway, handle not-connected" boilerplate as the HA/logs runtimes.
+
+## Logs (`logs-tools.ts` + `logs-tool-runtime.ts`, 5 tools)
+
+Read-only toolset over the shared home-lab MinIO bucket that Vector ships Docker container logs
+into (gzip JSON-lines objects, key layout `<basePath>/<host>/<YYYY-MM-DD>/<uuid>.log.gz` — see the
+`home-monitoring` repo's `vector.toml`). Host and date are auto-discovered by listing prefixes,
+not configured up front:
+
+- `logs_list_hosts` / `logs_list_dates` — walk the prefix tree (`LogsConnector.listPrefixes`).
+- `logs_tail` — most recent lines for a host/date, optionally filtered by container name
+  substring.
+- `logs_search` — grep-style match (regex, falls back to literal substring) against the message
+  field across a date range; capped at `MAX_SEARCH_DATES` (62) days and `maxObjects` (default 20,
+  max 100) compressed objects scanned per call — returns `truncated: true` rather than silently
+  scanning everything, so narrow the range or add a `container` filter if it's hit.
+- `logs_get_object` — fetch one specific object by key (from a `logs_tail`/`logs_search` result)
+  for reading a batch in full.
+
+No query engine on the MinIO side, so filtering happens backend-side after decompressing each
+object — this is a personal debugging tool, not built for scale.
+
 ## Adding or changing a tool
 
 - Garmin: add/edit the `TOOL_DEFS` entry in `garmin-tools.ts` **and** the matching allowlist entry
@@ -52,5 +80,7 @@ CRUD, comments, channel/analytics reads, and `youtube_upload_video`.
   domain wrapper in `home-assistant-domain-tools.ts` if it's sugar over `ha_call_service`.
 - YouTube: add an action to the dispatch table in `youtube-tools.ts` and the corresponding case in
   `HttpYoutubeConnector.call` (`infrastructure/youtube/http-youtube-connector.ts`).
-- In all three cases, the tool handler itself should stay a thin translation — real logic belongs
-  in the gateway/connector, not the tool file.
+- Personal health / Logs: same pattern as Home Assistant — add a tool in the relevant
+  `*-tools.ts` that calls the connector's primitive(s) directly, no allowlist to keep in sync.
+- In all cases, the tool handler itself should stay a thin translation — real logic belongs in
+  the gateway/connector, not the tool file.

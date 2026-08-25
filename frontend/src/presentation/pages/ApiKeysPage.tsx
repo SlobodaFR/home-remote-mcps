@@ -81,6 +81,10 @@ export function ApiKeysPage() {
             <code className="block bg-canvas border border-hairline p-md mb-md">
               {created.homeAssistantMcpUrl}
             </code>
+            <p className="font-caption-sm text-mute mb-xs">Logs Docker</p>
+            <code className="block bg-canvas border border-hairline p-md mb-md">
+              {created.logsMcpUrl}
+            </code>
             <p className="font-caption-sm text-mute mb-xs">Donnees de sante</p>
             <code className="block bg-canvas border border-hairline p-md mb-md">
               {created.personalHealthMcpUrl}

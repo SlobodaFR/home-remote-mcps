@@ -20,6 +20,8 @@ domain/<area>/           abstract classes = ports, plain entities. No framework 
   credential/              Credential entity (states: pending/validated/failed) + CredentialRepository port
   garmin/                  GarminConnector port
   home-assistant/          HomeAssistantConnector port
+  logs/                    LogsConnector port (MinIO/Vector Docker logs)
+  personal-health/         PersonalHealthConnector port
   youtube/                 YoutubeConnector port
   shared/                  CredentialCrypto port, hash helper
   user/                    User entity + UserRepository port
@@ -28,8 +30,10 @@ application/<area>/       use cases (one class, one execute()). Business logic l
   api-keys/                create / list / revoke
   auth/                    handle-oauth-callback, handle-session-revoked
   credentials/             start-garmin-login, submit-garmin-mfa, save-home-assistant-connection,
+                            save-logs-connection, save-personal-health-connection,
                             start-youtube-connection, complete-youtube-connection, list, delete
-  mcp/                     GarminDataGateway, HomeAssistantDataGateway, YoutubeDataGateway,
+  mcp/                     GarminDataGateway, HomeAssistantDataGateway, LogsDataGateway,
+                            PersonalHealthDataGateway, YoutubeDataGateway,
                             ResolveUserFromApiKeyUseCase
 
 infrastructure/<area>/    adapters implementing the domain ports
@@ -37,6 +41,8 @@ infrastructure/<area>/    adapters implementing the domain ports
   crypto/                  AesGcmCredentialCrypto
   garmin/                  HttpGarminConnector (calls the Python sidecar)
   home-assistant/          HttpHomeAssistantConnector (calls the user's HAOS instance directly)
+  logs/                    MinioLogsConnector (`minio` client against the shared home-lab bucket)
+  personal-health/         HttpPersonalHealthConnector (calls health.sloboda.fr directly)
   youtube/                 HttpYoutubeConnector (calls Google OAuth2 + YouTube Data/Analytics APIs)
   persistence/             database.module.ts, entities/*.orm-entity.ts, repositories/typeorm-*.ts
   shared.module.ts          DI wiring shared across features (crypto, auth verifier, etc.)
@@ -51,6 +57,8 @@ interfaces/mcp/           one controller + one register*Tools(...) per integrati
   garmin-mcp.{controller,module}.ts, garmin-tools.ts        (~130 tools, ~1069 lines)
   home-assistant-mcp.{controller,module}.ts,
     home-assistant-tools.ts, home-assistant-domain-tools.ts, home-assistant-tool-runtime.ts
+  logs-mcp.{controller,module}.ts, logs-tools.ts, logs-tool-runtime.ts   (5 tools)
+  personal-health-mcp.{controller,module}.ts, personal-health-tools.ts, personal-health-tool-runtime.ts
   youtube-mcp.{controller,module}.ts, youtube-tools.ts       (22 actions, ~277 lines)
 ```
 
@@ -78,9 +86,12 @@ interfaces/mcp/           one controller + one register*Tools(...) per integrati
    - if the sidecar's response includes rotated tokens, the gateway re-encrypts and
      `credentialRepository.save(...)`s them before returning the tool result
 
-Home Assistant and YouTube gateways follow the identical shape, swapping the connector and what
-"call" means (HA: `request(method, path, ...)` REST passthrough; YouTube: `call(action, params)`
-dispatch table in `youtube-tools.ts`).
+Home Assistant, YouTube, personal-health, and logs gateways follow the identical shape, swapping
+the connector and what "call" means (HA: `request(method, path, ...)` REST passthrough; YouTube:
+`call(action, params)` dispatch table in `youtube-tools.ts`; personal-health:
+`request(path, queryParams)` REST passthrough scoped under the user's API key; logs:
+`listPrefixes`/`listObjects`/`readObjectLines` object-storage primitives against the shared MinIO
+bucket).
 
 ## Credential connection flows (per integration, differs by upstream auth model)
 
@@ -99,8 +110,15 @@ dispatch table in `youtube-tools.ts`).
   2. `CompleteYoutubeConnectionUseCase` (public, unauthenticated — Google calls this back, no
      session cookie available) reads `state` back to find the pending credential, exchanges the
      `code` for tokens, and marks it validated.
+- **Personal health** — `SavePersonalHealthConnectionUseCase.execute(userId, apiKey)`:
+  single-step, tests the `health.sloboda.fr` API key before persisting (mirrors Home Assistant;
+  fixed base URL instead of a user-supplied one).
+- **Logs** — `SaveLogsConnectionUseCase.execute(userId, basePath)`: single-step, tests that the
+  MinIO prefix is listable before persisting. Unlike every other flow, no secret is collected here
+  — the bucket endpoint/credentials are shared infra config (`MINIO_*` env vars); `basePath` is
+  the only per-user value, and it isn't sensitive.
 
-All three converge on the same `Credential` entity (`domain/credential/credential.ts`) with states
+All converge on the same `Credential` entity (`domain/credential/credential.ts`) with states
 driven by `markPending` / `markValidated` / `markFailed`.
 
 ## Auth model detail

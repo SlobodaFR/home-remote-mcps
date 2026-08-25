@@ -5,11 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 `home-remote-mcps` — a personal remote MCP gateway. A NestJS backend exposes Model Context
-Protocol (Streamable HTTP) servers for Garmin Connect, Home Assistant, and YouTube, so Claude
-(or any MCP client) can call them from anywhere. Auth is delegated to an external SSO
-(`home-auth`, OAuth2) for the web UI; MCP clients authenticate with a per-user API key embedded
-in the URL. A separate Python sidecar (`garmin-connector`) owns the actual Garmin login/session
-logic via the `garminconnect` library.
+Protocol (Streamable HTTP) servers for Garmin Connect, Home Assistant, YouTube, personal health
+data (the `health.sloboda.fr` companion service), and Docker container logs (a shared MinIO
+bucket that Vector ships logs into — see the `home-monitoring` repo), so Claude (or any MCP
+client) can call them from anywhere. Auth is delegated to an external SSO (`home-auth`, OAuth2)
+for the web UI; MCP clients authenticate with a per-user API key embedded in the URL. A separate
+Python sidecar (`garmin-connector`) owns the actual Garmin login/session logic via the
+`garminconnect` library.
 
 Three deployables:
 
@@ -118,6 +120,18 @@ only the guard + route need to change; gateways and tool handlers are untouched.
   talks directly to YouTube Data API v3 / Analytics API v2, no client library. Access tokens are
   short-lived and refreshed ahead of expiry using the stored refresh token; `refreshedCredentialsJson`
   is persisted the same way as Garmin's rotated tokens.
+- **Personal health** (`domain/personal-health/personal-health-connector.ts`): single-token REST
+  API on the `health.sloboda.fr` companion service (Apple Health data ingested there via the
+  Health Auto Export iOS app) — same "no sidecar, one primitive" shape as Home Assistant, just a
+  fixed base URL instead of a user-supplied one.
+- **Logs** (`domain/logs/log-connector.ts`): reads Docker container logs that Vector ships to a
+  shared home-lab MinIO bucket as gzip-compressed JSON-lines objects (see the `home-monitoring`
+  repo's `vector.toml`; key layout `<basePath>/<host>/<YYYY-MM-DD>/<uuid>.log.gz`). Unlike every
+  other integration, the bucket endpoint/credentials are shared infra config (the `MINIO_*` env
+  vars this backend already uses for its own Litestream replication) rather than something the
+  user supplies — the only per-user setting is `basePath`. `listPrefixes`/`listObjects`/
+  `readObjectLines` are the object-storage primitives; `interfaces/mcp/logs-tools.ts` builds
+  host/date auto-discovery and a capped grep-style search on top of them.
 
 ### Auth model
 

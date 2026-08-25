@@ -39,6 +39,10 @@ export function CredentialsPage() {
   const [haMessage, setHaMessage] = useState<Message | null>(null);
   const [haSubmitting, setHaSubmitting] = useState(false);
 
+  const [logsBasePath, setLogsBasePath] = useState('logs/');
+  const [logsMessage, setLogsMessage] = useState<Message | null>(null);
+  const [logsSubmitting, setLogsSubmitting] = useState(false);
+
   const [healthApiKey, setHealthApiKey] = useState('');
   const [healthMessage, setHealthMessage] = useState<Message | null>(null);
   const [healthSubmitting, setHealthSubmitting] = useState(false);
@@ -51,6 +55,7 @@ export function CredentialsPage() {
   const garmin = credentials.find((c) => c.service === 'garmin') ?? null;
   const homeAssistant =
     credentials.find((c) => c.service === 'home_assistant') ?? null;
+  const logs = credentials.find((c) => c.service === 'logs') ?? null;
   const personalHealth =
     credentials.find((c) => c.service === 'personal_health') ?? null;
   const youtube = credentials.find((c) => c.service === 'youtube') ?? null;
@@ -178,6 +183,30 @@ export function CredentialsPage() {
     }
   }
 
+  async function handleConnectLogs() {
+    setLogsSubmitting(true);
+    setLogsMessage(null);
+    try {
+      const result = await apiClient.saveLogsConnection(logsBasePath);
+      if (result.status === 'ok') {
+        setLogsMessage({
+          kind: 'success',
+          text: 'Connexion logs validee et stockee.',
+        });
+        reload();
+      } else {
+        setLogsMessage({ kind: 'error', text: result.message });
+      }
+    } catch (error) {
+      setLogsMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    } finally {
+      setLogsSubmitting(false);
+    }
+  }
+
   async function handleConnectPersonalHealth() {
     setHealthSubmitting(true);
     setHealthMessage(null);
@@ -259,10 +288,11 @@ export function CredentialsPage() {
     <main className="max-w-xl mx-auto px-lg sm:px-xl py-xl sm:py-section flex flex-col gap-xl sm:gap-section">
       <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
-        {garmin || homeAssistant || personalHealth || youtube ? (
+        {garmin || homeAssistant || logs || personalHealth || youtube ? (
           <>
             {renderConnectedCard('Garmin Connect', garmin)}
             {renderConnectedCard('Home Assistant', homeAssistant)}
+            {renderConnectedCard('Logs Docker', logs)}
             {renderConnectedCard('Donnees de sante', personalHealth)}
             {renderConnectedCard('YouTube', youtube)}
           </>
@@ -400,6 +430,50 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${haMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {haMessage.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">
+          {logs ? 'Mettre a jour Logs Docker' : 'Connecter Logs Docker'}
+        </h2>
+        <p className="font-body-md text-mute mb-lg">
+          Prefixe (base path) dans le bucket MinIO partage ou Vector depose les
+          logs Docker (voir le repo home-monitoring). Le reste (hosts, dates)
+          est decouvert automatiquement en parcourant les dossiers - aucun
+          identifiant a saisir ici, le bucket est deja configure cote serveur.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectLogs();
+          }}
+          className="flex flex-col gap-md"
+        >
+          <input
+            type="text"
+            required
+            placeholder="Base path (ex: logs/)"
+            value={logsBasePath}
+            onChange={(e) => setLogsBasePath(e.target.value)}
+            className={inputClass}
+          />
+          <button
+            type="submit"
+            disabled={logsSubmitting}
+            className={primaryButtonClass}
+          >
+            {logsSubmitting ? 'Test en cours...' : 'Tester la connexion'}
+          </button>
+        </form>
+
+        {logsMessage && (
+          <p
+            className={`font-caption-md mt-md ${logsMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {logsMessage.text}
           </p>
         )}
       </section>

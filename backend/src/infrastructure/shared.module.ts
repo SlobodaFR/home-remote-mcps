@@ -1,12 +1,14 @@
 import { Global, Module } from '@nestjs/common';
 import { GarminConnector } from '../domain/garmin/garmin-connector';
 import { HomeAssistantConnector } from '../domain/home-assistant/home-assistant-connector';
+import { LogsConnector } from '../domain/logs/log-connector';
 import { PersonalHealthConnector } from '../domain/personal-health/personal-health-connector';
 import { CredentialCrypto } from '../domain/shared/credential-crypto';
 import { YoutubeConnector } from '../domain/youtube/youtube-connector';
 import { AesGcmCredentialCrypto } from './crypto/aes-gcm-credential-crypto';
 import { HttpGarminConnector } from './garmin/http-garmin-connector';
 import { HttpHomeAssistantConnector } from './home-assistant/http-home-assistant-connector';
+import { MinioLogsConnector } from './logs/minio-logs-connector';
 import { HttpPersonalHealthConnector } from './personal-health/http-personal-health-connector';
 import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
 
@@ -17,6 +19,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
     { provide: CredentialCrypto, useClass: AesGcmCredentialCrypto },
     { provide: GarminConnector, useClass: HttpGarminConnector },
     { provide: HomeAssistantConnector, useClass: HttpHomeAssistantConnector },
+    { provide: LogsConnector, useClass: MinioLogsConnector },
     {
       provide: PersonalHealthConnector,
       useClass: HttpPersonalHealthConnector,
@@ -27,6 +30,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
     CredentialCrypto,
     GarminConnector,
     HomeAssistantConnector,
+    LogsConnector,
     PersonalHealthConnector,
     YoutubeConnector,
   ],

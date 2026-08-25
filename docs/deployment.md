@@ -38,6 +38,9 @@ The SQLite database lives on the `home-remote-mcps-data` named volume
 
 Without `MINIO_BUCKET` set, there is no backup — the volume is the only copy.
 
+The same `MINIO_*` variables also point the `logs` MCP connector at the shared bucket Vector
+ships Docker container logs into (see `home-monitoring`) — no separate config needed for that.
+
 **`CREDENTIALS_ENCRYPTION_KEY` is not itself backed up by Litestream** — it's an env var, not
 data in the database. Back it up separately (e.g. in your secrets manager); losing it makes every
 row in the `credentials` table permanently undecryptable, even if the database file itself is
