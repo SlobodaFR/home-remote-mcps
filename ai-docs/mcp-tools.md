@@ -51,14 +51,23 @@ notifications, state-of-mind, cycle-tracking, medications), each taking an optio
 `from`/`to`/`limit` range. `personal-health-tool-runtime.ts` factors out the same
 "load credentials, call gateway, handle not-connected" boilerplate as the HA/logs runtimes.
 
-## Logs (`logs-tools.ts` + `logs-tool-runtime.ts`, 5 tools)
+## Logs (`logs-tools.ts` + `logs-tool-runtime.ts`, 6 tools)
 
 Read-only toolset over the shared home-lab MinIO bucket that Vector ships Docker container logs
 into (gzip JSON-lines objects, key layout `<basePath>/<host>/<YYYY-MM-DD>/<uuid>.log.gz` — see the
 `home-monitoring` repo's `vector.toml`). Host and date are auto-discovered by listing prefixes,
-not configured up front:
+not configured up front.
+
+**Important:** the `host` folder is Vector's own container hostname (Docker's default short
+container ID, since `home-monitoring`'s `docker-compose.yml` sets no explicit `hostname:` on the
+`vector` service) — it changes on every Vector redeploy and has nothing to do with which
+container produced a given log line. The actual service/container name lives in the
+`container_name` field inside each log line.
 
 - `logs_list_hosts` / `logs_list_dates` — walk the prefix tree (`LogsConnector.listPrefixes`).
+- `logs_list_containers` — samples a host/date's objects and returns the distinct
+  `container_name` values found, for answering "which services actually reported logs" without
+  already knowing them.
 - `logs_tail` — most recent lines for a host/date, optionally filtered by container name
   substring.
 - `logs_search` — grep-style match (regex, falls back to literal substring) against the message

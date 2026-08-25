@@ -71,7 +71,7 @@ export function registerLogsTools(
     'logs_list_hosts',
     {
       description:
-        'List container hosts that have shipped logs (top-level folders under the configured MinIO base path).',
+        "List the top-level folders under the configured MinIO base path. Despite the name, this is Vector's own instance identifier (its container's hostname, which changes on every Vector redeploy) - NOT the name of the containers being logged. Use logs_list_containers to find actual service/container names.",
       inputSchema: z.object({}),
     },
     () =>
@@ -98,6 +98,53 @@ export function registerLogsTools(
         const hostPrefix = `${credentials.basePath}${host}/`;
         const prefixes = await connector.listPrefixes(credentials, hostPrefix);
         return prefixes.map((prefix) => folderName(hostPrefix, prefix)).sort();
+      }),
+  );
+
+  server.registerTool(
+    'logs_list_containers',
+    {
+      description:
+        "Sample recent log objects for a host/date and return the distinct container names found inside them - this is how to find which actual services/containers reported logs, since the host folder itself is just Vector's own instance id.",
+      inputSchema: z.object({
+        host: z.string(),
+        date: z
+          .string()
+          .optional()
+          .describe('YYYY-MM-DD, defaults to today (UTC) if omitted.'),
+        sampleObjects: z
+          .number()
+          .optional()
+          .describe('Max objects sampled (default 5, max 20).'),
+      }),
+    },
+    ({ host, date, sampleObjects }) =>
+      run(async (connector, credentials) => {
+        const targetDate = date ?? new Date().toISOString().slice(0, 10);
+        const datePrefix = `${credentials.basePath}${host}/${targetDate}/`;
+        const objects = await connector.listObjects(credentials, datePrefix);
+        const cap = Math.min(sampleObjects ?? 5, 20);
+        const sampled = objects.slice(0, cap);
+
+        const containers = new Set<string>();
+        for (const object of sampled) {
+          const objectLines = await connector.readObjectLines(
+            credentials,
+            object.key,
+          );
+          for (const line of objectLines) {
+            const containerName = asVectorLogLine(line).container_name;
+            if (typeof containerName === 'string') {
+              containers.add(containerName);
+            }
+          }
+        }
+
+        return {
+          containers: [...containers].sort(),
+          sampledObjects: sampled.length,
+          totalObjects: objects.length,
+        };
       }),
   );
 

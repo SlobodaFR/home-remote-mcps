@@ -9,6 +9,36 @@ import {
   LogsTestResult,
 } from '../../domain/logs/log-connector';
 
+const GZIP_MAGIC = [0x1f, 0x8b];
+
+/**
+ * Vector's aws_s3 sink gzips every object and sets Content-Encoding: gzip on
+ * upload, but that's metadata - some paths between Vector and this backend
+ * (a compressing reverse proxy in front of MinIO, for instance) can honor it
+ * and hand back already-decompressed bytes. Detect via the gzip magic bytes
+ * instead of assuming, so that case degrades to reading the plaintext
+ * instead of throwing, and a genuinely corrupt object fails with an
+ * inspectable message instead of a bare zlib error.
+ */
+function decompressLogObject(buffer: Buffer, key: string): string {
+  if (buffer.length === 0) {
+    throw new Error(`Log object is empty: ${key}`);
+  }
+  if (buffer[0] !== GZIP_MAGIC[0] || buffer[1] !== GZIP_MAGIC[1]) {
+    return buffer.toString('utf-8');
+  }
+  try {
+    return gunzipSync(buffer).toString('utf-8');
+  } catch (error) {
+    const head = buffer.subarray(0, 16).toString('hex');
+    throw new Error(
+      `Failed to gunzip ${key} (${buffer.length.toString()} bytes, starts with ${head}): ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
 /** MinIO's JS client wants host/port/useSSL split out, not a single URL. */
 function clientOptionsFromEndpoint(
   endpoint: string,
@@ -107,8 +137,7 @@ export class MinioLogsConnector extends LogsConnector {
     for await (const chunk of stream as AsyncIterable<Buffer>) {
       chunks.push(chunk);
     }
-    return gunzipSync(Buffer.concat(chunks))
-      .toString('utf-8')
+    return decompressLogObject(Buffer.concat(chunks), key)
       .split('\n')
       .filter((line) => line.length > 0)
       .map((line) => JSON.parse(line) as unknown);
