@@ -103,9 +103,7 @@ const createRecipeInput = z.object({
   hints: z.array(z.string()).optional(),
 });
 
-const updateRecipeInput = createRecipeInput.partial().extend({
-  image_owned_by_user: z.boolean().optional(),
-});
+const updateRecipeInput = createRecipeInput.partial();
 
 /**
  * One entry per allowlisted `cookidoo_api.Cookidoo` method (see
