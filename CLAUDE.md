@@ -143,10 +143,13 @@ only the guard + route need to change; gateways and tool handlers are untouched.
   cookie jar (OAuth2-proxy cookies) — `cookiesJson` is that jar serialized to JSON, paired with
   the `localization` (country/language/domain) it was issued under, since Cookidoo is served from
   a per-country domain (`cookidoo.ch`, `cookidoo.co.uk`, ...). `call(method, params)` dispatches by
-  name to ~35 allowlisted methods on the `cookidoo_api.Cookidoo` client (catalogue lives in
+  name to ~38 allowlisted methods on the `cookidoo_api.Cookidoo` client (catalogue lives in
   `cookidoo-tools.ts`, param names match the library's Python kwargs verbatim). Cookies can rotate
   mid-session (the OAuth2 proxy refreshes them) — every call can return `refreshedCookiesJson` to
-  persist, same pattern as Garmin's `refreshedTokensJson`.
+  persist, same pattern as Garmin's `refreshedTokensJson`. `cookidoo-connector/requirements.txt`
+  currently pins `cookidoo-api` to a fork commit, not a PyPI release, to get recipe creation
+  (`create_custom_recipe`/`update_custom_recipe`, miaucl/cookidoo-api#238) ahead of that PR
+  merging upstream — re-pin to a released version once it ships.
 
 ### Auth model
 

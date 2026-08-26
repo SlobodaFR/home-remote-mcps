@@ -1,4 +1,8 @@
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
-cookidoo-api>=0.17.2
+# Pinned to a fork commit, not PyPI: adds create_custom_recipe()/
+# update_custom_recipe() (miaucl/cookidoo-api#238, open/unreviewed as of
+# 2026-08-26). Re-pin to a released `cookidoo-api>=X` once that PR merges
+# and ships - the recipe-creation API may still change before then.
+cookidoo-api @ git+https://github.com/Dragons0458/cookidoo-api.git@84d99203e0e68cbeca1831ac800344fe52233be3
 aiohttp>=3.9.0

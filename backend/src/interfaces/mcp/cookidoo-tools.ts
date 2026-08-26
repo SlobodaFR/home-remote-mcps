@@ -24,6 +24,88 @@ const ownedItem = z.object({
 
 const ingredientItem = ownedItem.extend({ description: z.string() });
 
+const temperatureSetting = z.object({
+  value: z.union([z.number(), z.string()]),
+  unit: z.string().optional(),
+});
+
+/**
+ * `annotationType` is our own discriminator for dispatch (the underlying
+ * library's annotation dataclasses aren't tagged) - not to be confused
+ * with the `type` field on a custom annotation, which is the Cookidoo API's
+ * own annotation type string (e.g. "INGREDIENT", "TTS").
+ */
+const annotation = z.discriminatedUnion('annotationType', [
+  z.object({
+    annotationType: z.literal('ingredient'),
+    slot: z.string(),
+    description: z.string(),
+    name: z.string().optional(),
+  }),
+  z.object({
+    annotationType: z.literal('tts'),
+    slot: z.string(),
+    time: z.number().int().optional(),
+    temperature: temperatureSetting.optional(),
+    speed: z.string().optional(),
+    direction: z.enum(['CW', 'CCW']).optional(),
+    name: z.string().optional(),
+  }),
+  z.object({
+    annotationType: z.literal('mode'),
+    slot: z.string(),
+    mode: z.string(),
+    time: z.number().int().optional(),
+    temperature: temperatureSetting.optional(),
+    speed: z.string().optional(),
+    direction: z.enum(['CW', 'CCW']).optional(),
+    power: z.string().optional(),
+    accessory: z.string().optional(),
+    name: z.string().optional(),
+  }),
+  z.object({
+    annotationType: z.literal('custom'),
+    slot: z.string(),
+    type: z.string(),
+    data: z.record(z.string(), z.unknown()).optional(),
+    name: z.string().optional(),
+  }),
+]);
+
+const stepSettings = z.object({
+  time: z.number().int().optional(),
+  temperature: z.union([z.number(), z.string()]).optional(),
+  speed: z.union([z.number(), z.string()]).optional(),
+});
+
+const instruction = z.union([
+  z.string(),
+  z.object({
+    text: z.string(),
+    settings: stepSettings.optional(),
+    annotations: z.array(annotation).optional(),
+  }),
+]);
+
+const createRecipeInput = z.object({
+  name: z.string(),
+  ingredients: z.array(z.string()),
+  instructions: z.array(instruction),
+  serving_size: z.number().int(),
+  total_time: z.number().int(),
+  active_time: z.number().int(),
+  tools: z.array(z.string()).optional(),
+  unit_text: z.string().optional(),
+  image: z.string().optional(),
+  hints: z.array(z.string()).optional(),
+  work_status: z.string().optional(),
+  requires_annotations_check: z.boolean().optional(),
+});
+
+const updateRecipeInput = createRecipeInput.partial().extend({
+  image_owned_by_user: z.boolean().optional(),
+});
+
 /**
  * One entry per allowlisted `cookidoo_api.Cookidoo` method (see
  * cookidoo-connector/app/data.py for the matching Python-side allowlist -
@@ -297,6 +379,21 @@ const TOOL_DEFS: ToolDef[] = [
     params: [
       { name: 'day', zod: z.string() },
       { name: 'recipe_id', zod: z.string() },
+    ],
+  },
+  {
+    method: 'create_custom_recipe',
+    description:
+      'Create a brand-new custom recipe from scratch on Cookidoo (name, ingredients, step-by-step instructions, servings, timings). Instructions can be plain text or structured with Thermomix guided-cooking settings (time/temperature/speed) and annotations anchored to a text slot within the step. UNSTABLE: relies on an unmerged upstream cookidoo-api PR (miaucl/cookidoo-api#238) - behavior may change.',
+    params: [{ name: 'recipe', zod: createRecipeInput }],
+  },
+  {
+    method: 'update_custom_recipe',
+    description:
+      "Update fields of an existing custom recipe - partial, omitted fields keep their current value. Same 'recipe' shape as create_custom_recipe. UNSTABLE: relies on an unmerged upstream cookidoo-api PR (miaucl/cookidoo-api#238) - behavior may change.",
+    params: [
+      { name: 'recipe_id', zod: z.string() },
+      { name: 'recipe', zod: updateRecipeInput },
     ],
   },
 ];
