@@ -163,7 +163,13 @@ def _create_recipe_from_dict(data: dict[str, Any]) -> CookidooCreateCustomRecipe
         serving_size=data["serving_size"],
         total_time=data["total_time"],
         active_time=data["active_time"],
-        tools=data.get("tools", []),
+        # cookidoo_api.Cookidoo.create_custom_recipe() falls back to
+        # `recipe.tools or [ThermomixMachineType.TM7]` when this is empty -
+        # Cookidoo's API rejects TM7 with a 400 validationError on accounts
+        # whose machine isn't a TM7 (confirmed: this account is TM6), so
+        # default to the account's actual machine here instead of letting
+        # that fallback fire.
+        tools=data.get("tools") or ["TM6"],
         unit_text=data.get("unit_text", "portion"),
         image=data.get("image"),
         hints=data.get("hints", []),

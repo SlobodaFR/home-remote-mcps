@@ -94,7 +94,12 @@ const createRecipeInput = z.object({
   serving_size: z.number().int(),
   total_time: z.number().int(),
   active_time: z.number().int(),
-  tools: z.array(z.string()).optional(),
+  tools: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Thermomix model(s) this recipe targets (e.g. "TM6"). Defaults to the account\'s TM6 if omitted - Cookidoo rejects other machine models the account does not own with a 400 validation error.',
+    ),
   unit_text: z.string().optional(),
   image: z.string().optional(),
   hints: z.array(z.string()).optional(),
