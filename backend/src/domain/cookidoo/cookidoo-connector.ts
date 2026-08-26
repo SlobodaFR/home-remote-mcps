@@ -7,7 +7,8 @@ export interface CookidooLocalization {
 export type CookidooLoginResult =
   | {
       status: 'success';
-      cookiesJson: string;
+      /** Opaque cookie jar (list of {key,value,domain,path}) - the sidecar's own JSON, not a serialized string. */
+      cookiesJson: unknown;
       localization: CookidooLocalization;
     }
   | { status: 'error'; message: string };
@@ -20,7 +21,7 @@ export type CookidooLoginResult =
  */
 export interface CookidooDataResult<T> {
   data: T;
-  refreshedCookiesJson?: string;
+  refreshedCookiesJson?: unknown;
 }
 
 /**
@@ -28,9 +29,9 @@ export interface CookidooDataResult<T> {
  * cookidoo-connector Python sidecar, which owns the actual Cookidoo login
  * (username/password OAuth2 dance) and session-cookie handling via the
  * `cookidoo-api` library - no maintained Node client exists for Cookidoo.
- * `cookiesJson` is an opaque blob (the session's cookie jar, serialized):
- * the backend never inspects it, only encrypts/stores it and hands it back
- * on each data call.
+ * `cookiesJson` is an opaque value (the session's cookie jar, as the
+ * sidecar's own JSON - not a pre-serialized string): the backend never
+ * inspects it, only encrypts/stores it and hands it back on each data call.
  *
  * `call` dispatches by name to one of the ~35 allowlisted async methods on
  * the underlying `cookidoo_api.Cookidoo` client (see cookidoo-tools.ts for
@@ -53,12 +54,12 @@ export abstract class CookidooConnector {
 
   /** Cheap call (user info) used to confirm stored cookies are still valid. */
   abstract checkSession(
-    cookiesJson: string,
+    cookiesJson: unknown,
     localization: CookidooLocalization,
   ): Promise<CookidooDataResult<{ valid: boolean }>>;
 
   abstract call<T>(
-    cookiesJson: string,
+    cookiesJson: unknown,
     localization: CookidooLocalization,
     method: string,
     params: Record<string, unknown>,

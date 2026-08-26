@@ -54,7 +54,7 @@ export class CookidooDataGateway {
 
     if (result.refreshedCookiesJson) {
       const refreshedPayload: CookidooCredentialPayload = {
-        cookiesJson: JSON.parse(result.refreshedCookiesJson) as unknown,
+        cookiesJson: result.refreshedCookiesJson,
         localization: payload.localization,
       };
       credential.markValidated(

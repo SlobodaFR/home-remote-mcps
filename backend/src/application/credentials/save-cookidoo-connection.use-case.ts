@@ -63,7 +63,7 @@ export class SaveCookidooConnectionUseCase {
         updatedAt: now,
       });
     const payload: CookidooCredentialPayload = {
-      cookiesJson: JSON.parse(result.cookiesJson) as unknown,
+      cookiesJson: result.cookiesJson,
       localization: result.localization,
     };
     credential.markValidated(

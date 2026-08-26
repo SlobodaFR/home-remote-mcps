@@ -57,23 +57,20 @@ export class HttpCookidooConnector extends CookidooConnector {
   }
 
   async checkSession(
-    cookiesJson: string,
+    cookiesJson: unknown,
     localization: CookidooLocalization,
   ): Promise<CookidooDataResult<{ valid: boolean }>> {
-    return this.post('/session/check', {
-      cookiesJson: JSON.parse(cookiesJson) as unknown,
-      localization,
-    });
+    return this.post('/session/check', { cookiesJson, localization });
   }
 
   async call<T>(
-    cookiesJson: string,
+    cookiesJson: unknown,
     localization: CookidooLocalization,
     method: string,
     params: Record<string, unknown>,
   ): Promise<CookidooDataResult<T>> {
     return this.post<CookidooDataResult<T>>('/call', {
-      cookiesJson: JSON.parse(cookiesJson) as unknown,
+      cookiesJson,
       localization,
       method,
       params,

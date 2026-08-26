@@ -331,7 +331,7 @@ export function registerCookidooTools(
         try {
           const data = await gateway.run(userId, (connector, payload) =>
             connector.call(
-              JSON.stringify(payload.cookiesJson),
+              payload.cookiesJson,
               payload.localization,
               def.method,
               input,
