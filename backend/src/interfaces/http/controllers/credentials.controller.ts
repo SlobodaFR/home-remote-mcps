@@ -13,7 +13,12 @@ import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { CompleteYoutubeConnectionUseCase } from '../../../application/credentials/complete-youtube-connection.use-case';
 import { DeleteCredentialUseCase } from '../../../application/credentials/delete-credential.use-case';
+import { ListCookidooLocalizationsUseCase } from '../../../application/credentials/list-cookidoo-localizations.use-case';
 import { ListCredentialsUseCase } from '../../../application/credentials/list-credentials.use-case';
+import {
+  SaveCookidooConnectionResult,
+  SaveCookidooConnectionUseCase,
+} from '../../../application/credentials/save-cookidoo-connection.use-case';
 import {
   SaveHomeAssistantConnectionResult,
   SaveHomeAssistantConnectionUseCase,
@@ -38,11 +43,13 @@ import {
   SubmitGarminMfaResult,
   SubmitGarminMfaUseCase,
 } from '../../../application/credentials/submit-garmin-mfa.use-case';
+import { CookidooLocalization } from '../../../domain/cookidoo/cookidoo-connector';
 import {
   CurrentUser,
   CurrentUserPayload,
 } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
+import { SaveCookidooConnectionDto } from '../dto/save-cookidoo-connection.dto';
 import { SaveHomeAssistantConnectionDto } from '../dto/save-home-assistant-connection.dto';
 import { SaveLogsConnectionDto } from '../dto/save-logs-connection.dto';
 import { SavePersonalHealthConnectionDto } from '../dto/save-personal-health-connection.dto';
@@ -60,6 +67,8 @@ export class CredentialsController {
     private readonly listCredentials: ListCredentialsUseCase,
     private readonly startGarminLogin: StartGarminLoginUseCase,
     private readonly submitGarminMfa: SubmitGarminMfaUseCase,
+    private readonly saveCookidooConnection: SaveCookidooConnectionUseCase,
+    private readonly listCookidooLocalizations: ListCookidooLocalizationsUseCase,
     private readonly saveHomeAssistantConnection: SaveHomeAssistantConnectionUseCase,
     private readonly saveLogsConnection: SaveLogsConnectionUseCase,
     private readonly savePersonalHealthConnection: SavePersonalHealthConnectionUseCase,
@@ -91,6 +100,28 @@ export class CredentialsController {
     @Body() dto: SubmitGarminMfaDto,
   ): Promise<SubmitGarminMfaResult> {
     return this.submitGarminMfa.execute(user.id, dto.pendingId, dto.code);
+  }
+
+  @Get('cookidoo/localizations')
+  async cookidooLocalizations(
+    @Query('country') country?: string,
+    @Query('language') language?: string,
+  ): Promise<CookidooLocalization[]> {
+    return this.listCookidooLocalizations.execute(country, language);
+  }
+
+  @Post('cookidoo')
+  async connectCookidoo(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: SaveCookidooConnectionDto,
+  ): Promise<SaveCookidooConnectionResult> {
+    return this.saveCookidooConnection.execute(
+      user.id,
+      dto.email,
+      dto.password,
+      dto.countryCode,
+      dto.language,
+    );
   }
 
   @Post('home-assistant')

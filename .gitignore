@@ -19,3 +19,7 @@ garmin-connector/.venv
 garmin-connector/__pycache__
 garmin-connector/**/__pycache__
 garmin-connector/*.egg-info
+cookidoo-connector/.venv
+cookidoo-connector/__pycache__
+cookidoo-connector/**/__pycache__
+cookidoo-connector/*.egg-info

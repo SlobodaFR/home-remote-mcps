@@ -7,6 +7,7 @@ import { SharedInfrastructureModule } from './infrastructure/shared.module';
 import { ApiKeysModule } from './interfaces/http/modules/api-keys.module';
 import { AuthModule } from './interfaces/http/modules/auth.module';
 import { CredentialsModule } from './interfaces/http/modules/credentials.module';
+import { CookidooMcpModule } from './interfaces/mcp/cookidoo-mcp.module';
 import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
 import { HomeAssistantMcpModule } from './interfaces/mcp/home-assistant-mcp.module';
 import { LogsMcpModule } from './interfaces/mcp/logs-mcp.module';
@@ -27,6 +28,7 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
     AuthModule,
     CredentialsModule,
     ApiKeysModule,
+    CookidooMcpModule,
     GarminMcpModule,
     HomeAssistantMcpModule,
     LogsMcpModule,

@@ -25,6 +25,9 @@ jobs:
           - name: garmin-connector
             context: garmin-connector
             image: home-remote-mcps-garmin-connector
+          - name: cookidoo-connector
+            context: cookidoo-connector
+            image: home-remote-mcps-cookidoo-connector
 
     steps:
       - uses: actions/checkout@v4

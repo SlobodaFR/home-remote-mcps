@@ -53,6 +53,10 @@ export class ApiKeysController {
         `/api/mcp/home-assistant/${created.rawKey}`,
         publicUrl,
       ).toString(),
+      cookidooMcpUrl: new URL(
+        `/api/mcp/cookidoo/${created.rawKey}`,
+        publicUrl,
+      ).toString(),
       logsMcpUrl: new URL(
         `/api/mcp/logs/${created.rawKey}`,
         publicUrl,

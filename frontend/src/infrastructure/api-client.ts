@@ -61,6 +61,15 @@ export type GarminLoginResponse =
 export type HomeAssistantConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
+export type CookidooConnectionResponse =
+  { status: 'ok' } | { status: 'error'; message: string };
+
+export interface CookidooLocalization {
+  countryCode: string;
+  language: string;
+  url: string;
+}
+
 export type LogsConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
@@ -86,6 +95,7 @@ export interface CreatedApiKey {
   rawKey: string;
   mcpUrl: string;
   homeAssistantMcpUrl: string;
+  cookidooMcpUrl: string;
   logsMcpUrl: string;
   personalHealthMcpUrl: string;
   youtubeMcpUrl: string;
@@ -127,6 +137,31 @@ export const apiClient = {
       pendingId,
       code,
     });
+  },
+  fetchCookidooLocalizations(
+    country?: string,
+  ): Promise<CookidooLocalization[]> {
+    const query = country ? `?country=${encodeURIComponent(country)}` : '';
+    return getJson<CookidooLocalization[]>(
+      `/credentials/cookidoo/localizations${query}`,
+    );
+  },
+  saveCookidooConnection(
+    email: string,
+    password: string,
+    countryCode: string,
+    language: string,
+  ): Promise<CookidooConnectionResponse> {
+    return sendJson<CookidooConnectionResponse>(
+      '/credentials/cookidoo',
+      'POST',
+      {
+        email,
+        password,
+        countryCode,
+        language,
+      },
+    );
   },
   saveHomeAssistantConnection(
     baseUrl: string,

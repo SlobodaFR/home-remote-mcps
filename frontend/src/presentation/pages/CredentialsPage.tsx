@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react';
-import { apiClient, Credential } from '../../infrastructure/api-client';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  apiClient,
+  Credential,
+  CookidooLocalization,
+} from '../../infrastructure/api-client';
 
 type Step = 'form' | 'mfa';
 interface Message {
@@ -34,6 +38,16 @@ export function CredentialsPage() {
   const [message, setMessage] = useState<Message | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [cookidooLocalizations, setCookidooLocalizations] = useState<
+    CookidooLocalization[]
+  >([]);
+  const [cookidooEmail, setCookidooEmail] = useState('');
+  const [cookidooPassword, setCookidooPassword] = useState('');
+  const [cookidooCountry, setCookidooCountry] = useState('');
+  const [cookidooLanguage, setCookidooLanguage] = useState('');
+  const [cookidooMessage, setCookidooMessage] = useState<Message | null>(null);
+  const [cookidooSubmitting, setCookidooSubmitting] = useState(false);
+
   const [haBaseUrl, setHaBaseUrl] = useState('');
   const [haToken, setHaToken] = useState('');
   const [haMessage, setHaMessage] = useState<Message | null>(null);
@@ -59,12 +73,38 @@ export function CredentialsPage() {
   const personalHealth =
     credentials.find((c) => c.service === 'personal_health') ?? null;
   const youtube = credentials.find((c) => c.service === 'youtube') ?? null;
+  const cookidoo = credentials.find((c) => c.service === 'cookidoo') ?? null;
+
+  const cookidooCountries = useMemo(
+    () => [...new Set(cookidooLocalizations.map((l) => l.countryCode))].sort(),
+    [cookidooLocalizations],
+  );
+  const cookidooLanguages = useMemo(
+    () =>
+      cookidooLocalizations
+        .filter((l) => l.countryCode === cookidooCountry)
+        .map((l) => l.language),
+    [cookidooLocalizations, cookidooCountry],
+  );
 
   function reload() {
     apiClient.fetchCredentials().then(setCredentials).catch(console.error);
   }
 
   useEffect(reload, []);
+
+  useEffect(() => {
+    apiClient
+      .fetchCookidooLocalizations()
+      .then((options) => {
+        setCookidooLocalizations(options);
+        if (options[0]) {
+          setCookidooCountry(options[0].countryCode);
+          setCookidooLanguage(options[0].language);
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   // Google redirects back here after the consent screen (see
   // CompleteYoutubeConnectionUseCase) - surface the result once, then strip
@@ -152,6 +192,37 @@ export function CredentialsPage() {
   async function handleDelete(id: string) {
     await apiClient.deleteCredential(id);
     reload();
+  }
+
+  async function handleConnectCookidoo() {
+    setCookidooSubmitting(true);
+    setCookidooMessage(null);
+    try {
+      const result = await apiClient.saveCookidooConnection(
+        cookidooEmail,
+        cookidooPassword,
+        cookidooCountry,
+        cookidooLanguage,
+      );
+      if (result.status === 'ok') {
+        setCookidooMessage({
+          kind: 'success',
+          text: 'Connexion Cookidoo validee et stockee.',
+        });
+        setCookidooEmail('');
+        setCookidooPassword('');
+        reload();
+      } else {
+        setCookidooMessage({ kind: 'error', text: result.message });
+      }
+    } catch (error) {
+      setCookidooMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    } finally {
+      setCookidooSubmitting(false);
+    }
   }
 
   async function handleConnectHomeAssistant() {
@@ -288,9 +359,15 @@ export function CredentialsPage() {
     <main className="max-w-xl mx-auto px-lg sm:px-xl py-xl sm:py-section flex flex-col gap-xl sm:gap-section">
       <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
-        {garmin || homeAssistant || logs || personalHealth || youtube ? (
+        {garmin ||
+        cookidoo ||
+        homeAssistant ||
+        logs ||
+        personalHealth ||
+        youtube ? (
           <>
             {renderConnectedCard('Garmin Connect', garmin)}
+            {renderConnectedCard('Cookidoo', cookidoo)}
             {renderConnectedCard('Home Assistant', homeAssistant)}
             {renderConnectedCard('Logs Docker', logs)}
             {renderConnectedCard('Donnees de sante', personalHealth)}
@@ -376,6 +453,87 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${message.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {message.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">
+          {cookidoo ? 'Mettre a jour Cookidoo' : 'Connecter Cookidoo'}
+        </h2>
+        <p className="font-body-md text-mute mb-lg">
+          Identifiants du compte Cookidoo (Thermomix). Ils ne sont pas stockes:
+          seule la session obtenue apres connexion l&apos;est, chiffree.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectCookidoo();
+          }}
+          className="flex flex-col gap-md"
+        >
+          <input
+            type="email"
+            required
+            placeholder="Email Cookidoo"
+            value={cookidooEmail}
+            onChange={(e) => setCookidooEmail(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="password"
+            required
+            placeholder="Mot de passe Cookidoo"
+            value={cookidooPassword}
+            onChange={(e) => setCookidooPassword(e.target.value)}
+            className={inputClass}
+          />
+          <select
+            required
+            value={cookidooCountry}
+            onChange={(e) => {
+              const country = e.target.value;
+              setCookidooCountry(country);
+              const firstLanguage = cookidooLocalizations.find(
+                (l) => l.countryCode === country,
+              )?.language;
+              if (firstLanguage) setCookidooLanguage(firstLanguage);
+            }}
+            className={inputClass}
+          >
+            {cookidooCountries.map((country) => (
+              <option key={country} value={country}>
+                {country.toUpperCase()}
+              </option>
+            ))}
+          </select>
+          <select
+            required
+            value={cookidooLanguage}
+            onChange={(e) => setCookidooLanguage(e.target.value)}
+            className={inputClass}
+          >
+            {cookidooLanguages.map((language) => (
+              <option key={language} value={language}>
+                {language}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            disabled={cookidooSubmitting}
+            className={primaryButtonClass}
+          >
+            {cookidooSubmitting ? 'Test en cours...' : 'Tester la connexion'}
+          </button>
+        </form>
+
+        {cookidooMessage && (
+          <p
+            className={`font-caption-md mt-md ${cookidooMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {cookidooMessage.text}
           </p>
         )}
       </section>

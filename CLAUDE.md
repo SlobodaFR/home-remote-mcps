@@ -6,24 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `home-remote-mcps` — a personal remote MCP gateway. A NestJS backend exposes Model Context
 Protocol (Streamable HTTP) servers for Garmin Connect, Home Assistant, YouTube, personal health
-data (the `health.sloboda.fr` companion service), and Docker container logs (a shared MinIO
-bucket that Vector ships logs into — see the `home-monitoring` repo), so Claude (or any MCP
-client) can call them from anywhere. Auth is delegated to an external SSO (`home-auth`, OAuth2)
-for the web UI; MCP clients authenticate with a per-user API key embedded in the URL. A separate
-Python sidecar (`garmin-connector`) owns the actual Garmin login/session logic via the
-`garminconnect` library.
+data (the `health.sloboda.fr` companion service), Docker container logs (a shared MinIO bucket
+that Vector ships logs into — see the `home-monitoring` repo), and Cookidoo (Thermomix recipes,
+shopping list, meal planning), so Claude (or any MCP client) can call them from anywhere. Auth is
+delegated to an external SSO (`home-auth`, OAuth2) for the web UI; MCP clients authenticate with a
+per-user API key embedded in the URL. Two separate Python sidecars own login/session logic that
+has no maintained Node equivalent: `garmin-connector` (via the `garminconnect` library) and
+`cookidoo-connector` (via the `cookidoo-api` library).
 
-Three deployables:
+Four deployables:
 
 - `backend/` — NestJS API + MCP servers + serves the built frontend as static SPA.
 - `frontend/` — React SPA (login, manage stored credentials, issue API keys).
 - `garmin-connector/` — internal-only FastAPI sidecar wrapping `garminconnect` (handles Garmin
   login/MFA/token refresh — no maintained Node equivalent exists).
+- `cookidoo-connector/` — internal-only FastAPI sidecar wrapping `cookidoo-api` (handles Cookidoo
+  login/session-cookie persistence — no maintained Node equivalent exists).
 
 ## Commands
 
-Run from repo root (npm workspaces cover `backend`/`frontend`; `garmin-connector` is a separate
-Python project).
+Run from repo root (npm workspaces cover `backend`/`frontend`; `garmin-connector` and
+`cookidoo-connector` are separate Python projects).
 
 ```bash
 # Dev servers
@@ -47,18 +50,20 @@ npm run lint                 # eslint on both workspaces
 npm run format                # prettier --write . (repo-wide)
 ```
 
-garmin-connector (Python, FastAPI + uvicorn, separate venv/deps — not part of the npm workspace):
+garmin-connector / cookidoo-connector (Python, FastAPI + uvicorn, separate venv/deps each — not
+part of the npm workspace):
 
 ```bash
-cd garmin-connector
+cd garmin-connector      # or cookidoo-connector
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
 Docker: root `Dockerfile` multi-stage builds frontend → backend → runtime (bundles Litestream for
-SQLite replication to MinIO). `garmin-connector/Dockerfile` builds the sidecar separately.
-`deploy/docker-compose.yml` runs both as sibling services on an internal network (sidecar has no
-published port — only reachable at `http://garmin-connector:8000` from the backend container).
+SQLite replication to MinIO). `garmin-connector/Dockerfile` and `cookidoo-connector/Dockerfile`
+build each sidecar separately. `deploy/docker-compose.yml` runs all three as sibling services on
+an internal network (sidecars have no published port — only reachable at
+`http://garmin-connector:8000` / `http://cookidoo-connector:8000` from the backend container).
 
 ## Architecture
 
@@ -132,6 +137,16 @@ only the guard + route need to change; gateways and tool handlers are untouched.
   user supplies — the only per-user setting is `basePath`. `listPrefixes`/`listObjects`/
   `readObjectLines` are the object-storage primitives; `interfaces/mcp/logs-tools.ts` builds
   host/date auto-discovery and a capped grep-style search on top of them.
+- **Cookidoo** (`domain/cookidoo/cookidoo-connector.ts`): no official REST API or maintained Node
+  client. Backend proxies to the `cookidoo-connector` Python sidecar over an internal-secret-headed
+  HTTP call, same shape as Garmin. Unlike Garmin's bearer tokens, a Cookidoo session is a browser
+  cookie jar (OAuth2-proxy cookies) — `cookiesJson` is that jar serialized to JSON, paired with
+  the `localization` (country/language/domain) it was issued under, since Cookidoo is served from
+  a per-country domain (`cookidoo.ch`, `cookidoo.co.uk`, ...). `call(method, params)` dispatches by
+  name to ~35 allowlisted methods on the `cookidoo_api.Cookidoo` client (catalogue lives in
+  `cookidoo-tools.ts`, param names match the library's Python kwargs verbatim). Cookies can rotate
+  mid-session (the OAuth2 proxy refreshes them) — every call can return `refreshedCookiesJson` to
+  persist, same pattern as Garmin's `refreshedTokensJson`.
 
 ### Auth model
 
@@ -146,9 +161,9 @@ Two independent auth mechanisms coexist:
   controller — independent of the session cookie flow. Managed via `ApiKeysModule`
   (`interfaces/http/controllers/api-keys.controller.ts`).
 
-Stored credentials (Garmin session tokens, HA long-lived token, YouTube OAuth tokens) are
-encrypted at rest with `CredentialCrypto` (AES-GCM, `CREDENTIALS_ENCRYPTION_KEY`) — the backend
-never stores or inspects raw upstream passwords, only post-login session material.
+Stored credentials (Garmin session tokens, Cookidoo session cookies, HA long-lived token, YouTube
+OAuth tokens) are encrypted at rest with `CredentialCrypto` (AES-GCM, `CREDENTIALS_ENCRYPTION_KEY`)
+— the backend never stores or inspects raw upstream passwords, only post-login session material.
 
 ### Persistence
 
@@ -161,7 +176,7 @@ SQLite file to MinIO via Litestream (`backend/litestream.yml`, `docker-entrypoin
 ### Frontend
 
 Small React SPA (`frontend/src/presentation/`): `LoginPage` (kicks off `home-auth` OAuth),
-`CredentialsPage` (connect/manage Garmin, HA, YouTube), `ApiKeysPage` (issue/revoke MCP API
+`CredentialsPage` (connect/manage Garmin, Cookidoo, HA, YouTube), `ApiKeysPage` (issue/revoke MCP API
 keys). `AuthProvider` + `RequireAuth` gate routes on the session cookie; `infrastructure/api-client.ts`
 is the one fetch wrapper. Built and served as static files by the NestJS backend in production
 (`ServeStaticModule`, SPA fallback excluding `/api*`).

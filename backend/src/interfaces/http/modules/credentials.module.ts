@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CompleteYoutubeConnectionUseCase } from '../../../application/credentials/complete-youtube-connection.use-case';
 import { DeleteCredentialUseCase } from '../../../application/credentials/delete-credential.use-case';
+import { ListCookidooLocalizationsUseCase } from '../../../application/credentials/list-cookidoo-localizations.use-case';
 import { ListCredentialsUseCase } from '../../../application/credentials/list-credentials.use-case';
+import { SaveCookidooConnectionUseCase } from '../../../application/credentials/save-cookidoo-connection.use-case';
 import { SaveHomeAssistantConnectionUseCase } from '../../../application/credentials/save-home-assistant-connection.use-case';
 import { SaveLogsConnectionUseCase } from '../../../application/credentials/save-logs-connection.use-case';
 import { SavePersonalHealthConnectionUseCase } from '../../../application/credentials/save-personal-health-connection.use-case';
@@ -22,6 +24,8 @@ import { CredentialsController } from '../controllers/credentials.controller';
     ListCredentialsUseCase,
     StartGarminLoginUseCase,
     SubmitGarminMfaUseCase,
+    SaveCookidooConnectionUseCase,
+    ListCookidooLocalizationsUseCase,
     SaveHomeAssistantConnectionUseCase,
     SaveLogsConnectionUseCase,
     SavePersonalHealthConnectionUseCase,
