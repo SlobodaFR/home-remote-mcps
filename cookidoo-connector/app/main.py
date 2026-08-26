@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from fastapi import Depends, FastAPI
@@ -5,6 +6,16 @@ from pydantic import BaseModel
 
 from . import data, login
 from .security import require_internal_secret
+
+# cookidoo-api only logs the actual failing HTTP status/response body (and
+# thus the real reason a call failed, e.g. a validation error from
+# Cookidoo) at DEBUG - which is silent by default, so every failure looked
+# like a generic "request exception" with no way to diagnose it. Root
+# logger stays at INFO; only cookidoo_api's own logger goes to DEBUG.
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+)
+logging.getLogger("cookidoo_api").setLevel(logging.DEBUG)
 
 app = FastAPI(title="cookidoo-connector", docs_url=None, redoc_url=None)
 

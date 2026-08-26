@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import date
 from typing import Any, Callable, Coroutine
@@ -32,6 +33,8 @@ from .session import (
     read_cookies,
     write_cookies,
 )
+
+_LOGGER = logging.getLogger(__name__)
 
 # Every method the /call dispatcher is allowed to invoke on a Cookidoo
 # client. Mirrors backend/src/interfaces/mcp/cookidoo-tools.ts's TOOL_DEFS -
@@ -238,8 +241,16 @@ async def with_cookies(
                 CookidooParseException,
                 CookidooConfigException,
             ) as err:
+                # `Exception.add_note()` (e.g. create_custom_recipe's
+                # orphaned-stub-id note) isn't included in str(err) - surface
+                # it explicitly, and log full detail server-side since the
+                # library itself only logs the real HTTP status/body at
+                # DEBUG (enabled in main.py).
+                notes = "; ".join(getattr(err, "__notes__", None) or [])
+                detail = f"{err} ({notes})" if notes else str(err)
+                _LOGGER.error("Cookidoo call failed: %s", detail, exc_info=err)
                 raise HTTPException(
-                    status_code=502, detail=f"Cookidoo injoignable: {err}"
+                    status_code=502, detail=f"Cookidoo injoignable: {detail}"
                 ) from err
 
             cookidoo.save_cookies(path)
