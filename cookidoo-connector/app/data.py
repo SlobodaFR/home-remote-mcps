@@ -4,21 +4,7 @@ from datetime import date
 from typing import Any, Callable, Coroutine
 
 import aiohttp
-from cookidoo_api import (
-    Cookidoo,
-    CookidooAdditionalItem,
-    CookidooConfig,
-    CookidooCreateCustomRecipe,
-    CookidooCustomAnnotation,
-    CookidooIngredientAnnotation,
-    CookidooIngredientItem,
-    CookidooInstruction,
-    CookidooModeAnnotation,
-    CookidooStepSettings,
-    CookidooTemperatureSetting,
-    CookidooTTSAnnotation,
-    CookidooUpdateCustomRecipe,
-)
+from cookidoo_api import Cookidoo, CookidooAdditionalItem, CookidooConfig, CookidooIngredientItem
 from cookidoo_api.exceptions import (
     CookidooAuthException,
     CookidooConfigException,
@@ -27,6 +13,7 @@ from cookidoo_api.exceptions import (
 )
 from fastapi import HTTPException
 
+from . import custom_recipes
 from .session import (
     localization_from_dict,
     new_cookie_tempfile_path,
@@ -91,123 +78,7 @@ _INGREDIENT_ITEM_PARAMS = {"ingredient_items"}
 _ADDITIONAL_ITEM_PARAMS = {"additional_items"}
 
 
-def _temperature_setting_from_dict(
-    data: dict[str, Any] | None,
-) -> CookidooTemperatureSetting | None:
-    if data is None:
-        return None
-    return CookidooTemperatureSetting(value=data["value"], unit=data.get("unit"))
-
-
-def _annotation_from_dict(data: dict[str, Any]) -> Any:
-    # `annotationType` is our own discriminator (the library's annotation
-    # dataclasses aren't tagged) - not to be confused with
-    # CookidooCustomAnnotation's own `type` field, which is the API's
-    # annotation type string (e.g. "INGREDIENT", "TTS").
-    kind = data["annotationType"]
-    if kind == "ingredient":
-        return CookidooIngredientAnnotation(
-            slot=data["slot"],
-            description=data["description"],
-            name=data.get("name"),
-        )
-    if kind == "tts":
-        return CookidooTTSAnnotation(
-            slot=data["slot"],
-            time=data.get("time"),
-            temperature=_temperature_setting_from_dict(data.get("temperature")),
-            speed=data.get("speed"),
-            direction=data.get("direction"),
-            name=data.get("name"),
-        )
-    if kind == "mode":
-        return CookidooModeAnnotation(
-            slot=data["slot"],
-            mode=data["mode"],
-            time=data.get("time"),
-            temperature=_temperature_setting_from_dict(data.get("temperature")),
-            speed=data.get("speed"),
-            direction=data.get("direction"),
-            power=data.get("power"),
-            accessory=data.get("accessory"),
-            name=data.get("name"),
-        )
-    if kind == "custom":
-        return CookidooCustomAnnotation(
-            type=data["type"],
-            slot=data["slot"],
-            data=data.get("data", {}),
-            name=data.get("name"),
-        )
-    raise HTTPException(status_code=400, detail=f"Unknown annotation type: {kind}")
-
-
-def _instruction_from_item(item: str | dict[str, Any]) -> str | CookidooInstruction:
-    if isinstance(item, str):
-        return item
-    settings = item.get("settings")
-    return CookidooInstruction(
-        text=item["text"],
-        settings=CookidooStepSettings(**settings) if settings else None,
-        annotations=[
-            _annotation_from_dict(a) for a in item.get("annotations", [])
-        ],
-    )
-
-
-def _create_recipe_from_dict(data: dict[str, Any]) -> CookidooCreateCustomRecipe:
-    return CookidooCreateCustomRecipe(
-        name=data["name"],
-        ingredients=data["ingredients"],
-        instructions=[_instruction_from_item(i) for i in data["instructions"]],
-        serving_size=data["serving_size"],
-        total_time=data["total_time"],
-        active_time=data["active_time"],
-        # cookidoo_api.Cookidoo.create_custom_recipe() falls back to
-        # `recipe.tools or [ThermomixMachineType.TM7]` when this is empty -
-        # Cookidoo's API rejects TM7 with a 400 validationError on accounts
-        # whose machine isn't a TM7 (confirmed: this account is TM6), so
-        # default to the account's actual machine here instead of letting
-        # that fallback fire.
-        tools=data.get("tools") or ["TM6"],
-        unit_text=data.get("unit_text", "portion"),
-        image=data.get("image"),
-        hints=data.get("hints", []),
-        work_status=data.get("work_status", "PRIVATE"),
-        requires_annotations_check=data.get("requires_annotations_check", False),
-    )
-
-
-def _update_recipe_from_dict(data: dict[str, Any]) -> CookidooUpdateCustomRecipe:
-    instructions = data.get("instructions")
-    return CookidooUpdateCustomRecipe(
-        name=data.get("name"),
-        ingredients=data.get("ingredients"),
-        instructions=(
-            [_instruction_from_item(i) for i in instructions]
-            if instructions is not None
-            else None
-        ),
-        serving_size=data.get("serving_size"),
-        total_time=data.get("total_time"),
-        active_time=data.get("active_time"),
-        tools=data.get("tools"),
-        unit_text=data.get("unit_text"),
-        image=data.get("image"),
-        image_owned_by_user=data.get("image_owned_by_user"),
-        hints=data.get("hints"),
-        work_status=data.get("work_status"),
-        requires_annotations_check=data.get("requires_annotations_check"),
-    )
-
-
-_RECIPE_PARAM_BUILDERS: dict[str, Callable[[dict[str, Any]], Any]] = {
-    "create_custom_recipe": _create_recipe_from_dict,
-    "update_custom_recipe": _update_recipe_from_dict,
-}
-
-
-def _prepare_params(method: str, params: dict[str, Any]) -> dict[str, Any]:
+def _prepare_params(params: dict[str, Any]) -> dict[str, Any]:
     prepared = dict(params)
     for key in _DATE_PARAMS & prepared.keys():
         prepared[key] = date.fromisoformat(prepared[key])
@@ -215,9 +86,6 @@ def _prepare_params(method: str, params: dict[str, Any]) -> dict[str, Any]:
         prepared[key] = [CookidooIngredientItem(**item) for item in prepared[key]]
     for key in _ADDITIONAL_ITEM_PARAMS & prepared.keys():
         prepared[key] = [CookidooAdditionalItem(**item) for item in prepared[key]]
-    recipe_builder = _RECIPE_PARAM_BUILDERS.get(method)
-    if recipe_builder is not None and "recipe" in prepared:
-        prepared["recipe"] = recipe_builder(prepared["recipe"])
     return prepared
 
 
@@ -296,7 +164,25 @@ async def call_method(
             status_code=400, detail=f"Unknown or disallowed Cookidoo method: {method}"
         )
 
-    prepared = _prepare_params(method, params)
+    # These two bypass cookidoo_api.Cookidoo's own (broken) implementation
+    # entirely - see custom_recipes.py's module docstring for why.
+    if method == "create_custom_recipe":
+
+        async def call_create(client: Cookidoo) -> Any:
+            return await custom_recipes.create_custom_recipe(client, params["recipe"])
+
+        return await with_cookies(cookies_json, localization, call_create)
+
+    if method == "update_custom_recipe":
+
+        async def call_update(client: Cookidoo) -> Any:
+            return await custom_recipes.update_custom_recipe(
+                client, params["recipe_id"], params["recipe"]
+            )
+
+        return await with_cookies(cookies_json, localization, call_update)
+
+    prepared = _prepare_params(params)
 
     async def call(client: Cookidoo) -> Any:
         return await getattr(client, method)(**prepared)

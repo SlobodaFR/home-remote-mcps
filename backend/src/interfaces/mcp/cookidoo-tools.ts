@@ -72,17 +72,16 @@ const annotation = z.discriminatedUnion('annotationType', [
   }),
 ]);
 
-const stepSettings = z.object({
-  time: z.number().int().optional(),
-  temperature: z.union([z.number(), z.string()]).optional(),
-  speed: z.union([z.number(), z.string()]).optional(),
-});
-
+/**
+ * No top-level time/temperature/speed on a structured instruction -
+ * cookidoo.fr's own app never sets those on the instruction itself, only
+ * inside an annotation's `data`. Express any timing/temperature/speed
+ * cue via `annotations` instead.
+ */
 const instruction = z.union([
   z.string(),
   z.object({
     text: z.string(),
-    settings: stepSettings.optional(),
     annotations: z.array(annotation).optional(),
   }),
 ]);
@@ -101,10 +100,7 @@ const createRecipeInput = z.object({
       'Thermomix model(s) this recipe targets (e.g. "TM6"). Defaults to the account\'s TM6 if omitted - Cookidoo rejects other machine models the account does not own with a 400 validation error.',
     ),
   unit_text: z.string().optional(),
-  image: z.string().optional(),
   hints: z.array(z.string()).optional(),
-  work_status: z.string().optional(),
-  requires_annotations_check: z.boolean().optional(),
 });
 
 const updateRecipeInput = createRecipeInput.partial().extend({
@@ -389,13 +385,13 @@ const TOOL_DEFS: ToolDef[] = [
   {
     method: 'create_custom_recipe',
     description:
-      'Create a brand-new custom recipe from scratch on Cookidoo (name, ingredients, step-by-step instructions, servings, timings). Instructions can be plain text or structured with Thermomix guided-cooking settings (time/temperature/speed) and annotations anchored to a text slot within the step. UNSTABLE: relies on an unmerged upstream cookidoo-api PR (miaucl/cookidoo-api#238) - behavior may change.',
+      "Create a brand-new custom recipe from scratch on Cookidoo (name, ingredients, step-by-step instructions, servings, timings). Instructions can be plain text or structured with annotations (Thermomix time/temperature/speed cues) anchored to a text slot within the step. Saved as several small requests mirroring how cookidoo.fr itself saves a recipe (one per field) - not the combined single-request write from upstream cookidoo-api#238, which Cookidoo's API rejects.",
     params: [{ name: 'recipe', zod: createRecipeInput }],
   },
   {
     method: 'update_custom_recipe',
     description:
-      "Update fields of an existing custom recipe - partial, omitted fields keep their current value. Same 'recipe' shape as create_custom_recipe. UNSTABLE: relies on an unmerged upstream cookidoo-api PR (miaucl/cookidoo-api#238) - behavior may change.",
+      "Update fields of an existing custom recipe - partial, omitted fields keep their current value. Same 'recipe' shape as create_custom_recipe.",
     params: [
       { name: 'recipe_id', zod: z.string() },
       { name: 'recipe', zod: updateRecipeInput },
