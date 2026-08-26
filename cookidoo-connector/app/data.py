@@ -23,6 +23,23 @@ from .session import (
 
 _LOGGER = logging.getLogger(__name__)
 
+# cookidoo_api.const.DEFAULT_API_HEADERS only sets Accept - the pinned
+# fork commit predates upstream's browser-UA fix for the login flow
+# (miaucl/cookidoo-api#230, merged to master after this fork branched and
+# never rebased in), and never applied one to data-plane calls either
+# way. A combined create_custom_recipe()/update_custom_recipe() PATCH
+# that succeeds byte-for-byte from cookidoo.fr's own fetch() 400s
+# identically from here otherwise - suspected stricter/different
+# server-side validation for requests that don't look like a browser.
+# Applied session-wide (not just to custom-recipe writes) since any
+# Cookidoo write could plausibly hit the same path.
+_BROWSER_LIKE_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+}
+
 # Every method the /call dispatcher is allowed to invoke on a Cookidoo
 # client. Mirrors backend/src/interfaces/mcp/cookidoo-tools.ts's TOOL_DEFS -
 # keep the two in sync. Deliberately excludes login (session lifecycle,
@@ -99,6 +116,10 @@ async def with_cookies(
         cookie_jar=aiohttp.CookieJar(unsafe=True)
     ) as session:
         cookidoo = Cookidoo(session, cfg)
+        # See _BROWSER_LIKE_HEADERS above.
+        cookidoo._api_headers.update(  # noqa: SLF001
+            {**_BROWSER_LIKE_HEADERS, "Origin": str(cookidoo.api_endpoint)}
+        )
         path = new_cookie_tempfile_path()
         try:
             write_cookies(path, cookies_json)
