@@ -25,6 +25,7 @@ exactly the instructions/annotations shape the real API accepted).
 from http import HTTPStatus
 from typing import Any
 
+import aiohttp
 from cookidoo_api import (
     Cookidoo,
     CookidooCustomAnnotation,
@@ -107,6 +108,24 @@ def _instructions_json(
     return Cookidoo._process_recipe_steps(built, ingredient_texts)  # noqa: SLF001
 
 
+async def _warm_up_session(cookidoo: Cookidoo) -> None:
+    """Best-effort: a real browser always loads the app shell HTML before
+    any XHR/fetch call fires, picking up whatever cookies that page load
+    sets (a `csrf_` cookie was observed on a live browser session that
+    this API-calls-only session, which never navigates anywhere, has no
+    chance to pick up - the login flow alone never visits this page
+    either). Not a hard dependency: failures here are swallowed and the
+    real call is attempted regardless.
+    """
+    try:
+        async with cookidoo._session.get(  # noqa: SLF001
+            cookidoo.api_endpoint, headers={"Accept": "text/html"}
+        ):
+            pass
+    except (aiohttp.ClientError, TimeoutError):
+        pass
+
+
 async def _patch_fields(
     cookidoo: Cookidoo, recipe_id: str, fields: dict[str, Any]
 ) -> None:
@@ -125,6 +144,8 @@ async def _patch_fields(
 
 
 async def create_custom_recipe(cookidoo: Cookidoo, recipe: dict[str, Any]) -> Any:
+    await _warm_up_session(cookidoo)
+
     url_create = cookidoo.api_endpoint / ADD_CUSTOM_RECIPE_PATH.format(
         **cookidoo._cfg.localization.__dict__,  # noqa: SLF001
     )
@@ -180,6 +201,8 @@ async def create_custom_recipe(cookidoo: Cookidoo, recipe: dict[str, Any]) -> An
 async def update_custom_recipe(
     cookidoo: Cookidoo, recipe_id: str, recipe: dict[str, Any]
 ) -> Any:
+    await _warm_up_session(cookidoo)
+
     if recipe.get("name") is not None:
         await _patch_fields(cookidoo, recipe_id, {"name": recipe["name"]})
 
