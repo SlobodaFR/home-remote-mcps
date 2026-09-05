@@ -79,6 +79,9 @@ export type PersonalHealthConnectionResponse =
 export type InstagramConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
+export type OpenAiConnectionResponse =
+  { status: 'ok' } | { status: 'error'; message: string };
+
 export interface StartYoutubeConnectionResponse {
   pendingId: string;
   authorizeUrl: string;
@@ -103,6 +106,7 @@ export interface CreatedApiKey {
   personalHealthMcpUrl: string;
   youtubeMcpUrl: string;
   instagramMcpUrlTemplate: string;
+  openaiMcpUrlTemplate: string;
   createdAt: string;
 }
 
@@ -200,6 +204,17 @@ export const apiClient = {
       'POST',
       { accountName, accessToken },
     );
+  },
+  saveOpenAiConnection(
+    name: string,
+    apiKey: string,
+    organization?: string,
+  ): Promise<OpenAiConnectionResponse> {
+    return sendJson<OpenAiConnectionResponse>('/credentials/openai', 'POST', {
+      name,
+      apiKey,
+      organization: organization === '' ? undefined : organization,
+    });
   },
   startYoutubeConnection(
     clientId: string,

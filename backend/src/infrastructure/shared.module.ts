@@ -4,6 +4,7 @@ import { GarminConnector } from '../domain/garmin/garmin-connector';
 import { HomeAssistantConnector } from '../domain/home-assistant/home-assistant-connector';
 import { InstagramConnector } from '../domain/instagram/instagram-connector';
 import { LogsConnector } from '../domain/logs/log-connector';
+import { OpenAiConnector } from '../domain/openai/openai-connector';
 import { PersonalHealthConnector } from '../domain/personal-health/personal-health-connector';
 import { CredentialCrypto } from '../domain/shared/credential-crypto';
 import { YoutubeConnector } from '../domain/youtube/youtube-connector';
@@ -13,6 +14,7 @@ import { HttpGarminConnector } from './garmin/http-garmin-connector';
 import { HttpHomeAssistantConnector } from './home-assistant/http-home-assistant-connector';
 import { HttpInstagramConnector } from './instagram/http-instagram-connector';
 import { MinioLogsConnector } from './logs/minio-logs-connector';
+import { HttpOpenAiConnector } from './openai/http-openai-connector';
 import { HttpPersonalHealthConnector } from './personal-health/http-personal-health-connector';
 import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
 
@@ -26,6 +28,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
     { provide: HomeAssistantConnector, useClass: HttpHomeAssistantConnector },
     { provide: InstagramConnector, useClass: HttpInstagramConnector },
     { provide: LogsConnector, useClass: MinioLogsConnector },
+    { provide: OpenAiConnector, useClass: HttpOpenAiConnector },
     {
       provide: PersonalHealthConnector,
       useClass: HttpPersonalHealthConnector,
@@ -39,6 +42,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
     HomeAssistantConnector,
     InstagramConnector,
     LogsConnector,
+    OpenAiConnector,
     PersonalHealthConnector,
     YoutubeConnector,
   ],

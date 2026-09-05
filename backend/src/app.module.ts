@@ -12,6 +12,7 @@ import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
 import { HomeAssistantMcpModule } from './interfaces/mcp/home-assistant-mcp.module';
 import { InstagramMcpModule } from './interfaces/mcp/instagram-mcp.module';
 import { LogsMcpModule } from './interfaces/mcp/logs-mcp.module';
+import { OpenAiMcpModule } from './interfaces/mcp/openai-mcp.module';
 import { PersonalHealthMcpModule } from './interfaces/mcp/personal-health-mcp.module';
 import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
 
@@ -34,6 +35,7 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
     HomeAssistantMcpModule,
     InstagramMcpModule,
     LogsMcpModule,
+    OpenAiMcpModule,
     PersonalHealthMcpModule,
     YoutubeMcpModule,
   ],

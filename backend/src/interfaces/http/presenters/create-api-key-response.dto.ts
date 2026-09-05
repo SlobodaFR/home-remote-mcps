@@ -22,5 +22,11 @@ export interface CreateApiKeyResponseDto {
    * the Credentials page.
    */
   instagramMcpUrlTemplate: string;
+  /**
+   * Same key, OpenAI MCP endpoint template - ends in a placeholder because
+   * a user can hold several OpenAI API keys: replace "<connection-name>"
+   * with the name chosen when connecting that key on the Credentials page.
+   */
+  openaiMcpUrlTemplate: string;
   createdAt: string;
 }

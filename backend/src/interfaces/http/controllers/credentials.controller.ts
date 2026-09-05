@@ -32,6 +32,10 @@ import {
   SaveLogsConnectionUseCase,
 } from '../../../application/credentials/save-logs-connection.use-case';
 import {
+  SaveOpenAiConnectionResult,
+  SaveOpenAiConnectionUseCase,
+} from '../../../application/credentials/save-openai-connection.use-case';
+import {
   SavePersonalHealthConnectionResult,
   SavePersonalHealthConnectionUseCase,
 } from '../../../application/credentials/save-personal-health-connection.use-case';
@@ -57,6 +61,7 @@ import { SaveCookidooConnectionDto } from '../dto/save-cookidoo-connection.dto';
 import { SaveHomeAssistantConnectionDto } from '../dto/save-home-assistant-connection.dto';
 import { SaveInstagramConnectionDto } from '../dto/save-instagram-connection.dto';
 import { SaveLogsConnectionDto } from '../dto/save-logs-connection.dto';
+import { SaveOpenAiConnectionDto } from '../dto/save-openai-connection.dto';
 import { SavePersonalHealthConnectionDto } from '../dto/save-personal-health-connection.dto';
 import { StartGarminLoginDto } from '../dto/start-garmin-login.dto';
 import { StartYoutubeConnectionDto } from '../dto/start-youtube-connection.dto';
@@ -77,6 +82,7 @@ export class CredentialsController {
     private readonly saveHomeAssistantConnection: SaveHomeAssistantConnectionUseCase,
     private readonly saveInstagramConnection: SaveInstagramConnectionUseCase,
     private readonly saveLogsConnection: SaveLogsConnectionUseCase,
+    private readonly saveOpenAiConnection: SaveOpenAiConnectionUseCase,
     private readonly savePersonalHealthConnection: SavePersonalHealthConnectionUseCase,
     private readonly startYoutubeConnection: StartYoutubeConnectionUseCase,
     private readonly completeYoutubeConnection: CompleteYoutubeConnectionUseCase,
@@ -160,6 +166,19 @@ export class CredentialsController {
     @Body() dto: SaveLogsConnectionDto,
   ): Promise<SaveLogsConnectionResult> {
     return this.saveLogsConnection.execute(user.id, dto.basePath);
+  }
+
+  @Post('openai')
+  async connectOpenAi(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: SaveOpenAiConnectionDto,
+  ): Promise<SaveOpenAiConnectionResult> {
+    return this.saveOpenAiConnection.execute(
+      user.id,
+      dto.name,
+      dto.apiKey,
+      dto.organization,
+    );
   }
 
   @Post('personal-health')

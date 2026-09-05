@@ -73,6 +73,10 @@ export class ApiKeysController {
         `/api/mcp/instagram/${created.rawKey}/<account-name>`,
         publicUrl,
       ).toString(),
+      openaiMcpUrlTemplate: new URL(
+        `/api/mcp/openai/${created.rawKey}/<connection-name>`,
+        publicUrl,
+      ).toString(),
       createdAt: created.createdAt.toISOString(),
     };
   }

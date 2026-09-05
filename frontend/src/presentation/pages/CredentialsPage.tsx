@@ -36,6 +36,13 @@ function mcpUrlFor(
           accountName,
         );
       }
+      if (credential.service.startsWith('openai:')) {
+        const connectionName = credential.service.slice('openai:'.length);
+        return createdKey.openaiMcpUrlTemplate.replace(
+          '<connection-name>',
+          connectionName,
+        );
+      }
       return null;
   }
 }
@@ -141,6 +148,12 @@ export function CredentialsPage() {
   const [igMessage, setIgMessage] = useState<Message | null>(null);
   const [igSubmitting, setIgSubmitting] = useState(false);
 
+  const [oaName, setOaName] = useState('');
+  const [oaApiKey, setOaApiKey] = useState('');
+  const [oaOrganization, setOaOrganization] = useState('');
+  const [oaMessage, setOaMessage] = useState<Message | null>(null);
+  const [oaSubmitting, setOaSubmitting] = useState(false);
+
   const garmin = credentials.find((c) => c.service === 'garmin') ?? null;
   const homeAssistant =
     credentials.find((c) => c.service === 'home_assistant') ?? null;
@@ -151,6 +164,9 @@ export function CredentialsPage() {
   const cookidoo = credentials.find((c) => c.service === 'cookidoo') ?? null;
   const instagramAccounts = credentials.filter((c) =>
     c.service.startsWith('instagram:'),
+  );
+  const openaiConnections = credentials.filter((c) =>
+    c.service.startsWith('openai:'),
   );
 
   const cookidooCountries = useMemo(
@@ -410,6 +426,37 @@ export function CredentialsPage() {
     }
   }
 
+  async function handleConnectOpenAi() {
+    setOaSubmitting(true);
+    setOaMessage(null);
+    try {
+      const result = await apiClient.saveOpenAiConnection(
+        oaName,
+        oaApiKey,
+        oaOrganization,
+      );
+      if (result.status === 'ok') {
+        setOaMessage({
+          kind: 'success',
+          text: 'Connexion OpenAI validee et stockee.',
+        });
+        setOaName('');
+        setOaApiKey('');
+        setOaOrganization('');
+        reload();
+      } else {
+        setOaMessage({ kind: 'error', text: result.message });
+      }
+    } catch (error) {
+      setOaMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    } finally {
+      setOaSubmitting(false);
+    }
+  }
+
   async function handleConnectYoutube() {
     setYtSubmitting(true);
     setYtMessage(null);
@@ -481,7 +528,8 @@ export function CredentialsPage() {
         logs ||
         personalHealth ||
         youtube ||
-        instagramAccounts.length > 0 ? (
+        instagramAccounts.length > 0 ||
+        openaiConnections.length > 0 ? (
           <>
             {renderConnectedCard('Garmin Connect', garmin)}
             {renderConnectedCard('Cookidoo', cookidoo)}
@@ -492,6 +540,12 @@ export function CredentialsPage() {
             {instagramAccounts.map((credential) =>
               renderConnectedCard(
                 `Instagram: ${credential.service.slice('instagram:'.length)}`,
+                credential,
+              ),
+            )}
+            {openaiConnections.map((credential) =>
+              renderConnectedCard(
+                `OpenAI: ${credential.service.slice('openai:'.length)}`,
                 credential,
               ),
             )}
@@ -922,6 +976,65 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${igMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {igMessage.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">Connecter OpenAI</h2>
+        <p className="font-body-md text-mute mb-lg">
+          Une cle API OpenAI (platform.openai.com, section API keys). Plusieurs
+          cles peuvent etre connectees: choisis un nom court pour chacune
+          (lettres/chiffres/points/underscores), il sera utilise dans l&apos;URL
+          MCP correspondante. L&apos;organisation est optionnelle, seulement
+          necessaire si le compte appartient a plusieurs organisations.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectOpenAi();
+          }}
+          className="flex flex-col gap-md"
+        >
+          <input
+            type="text"
+            required
+            pattern="[a-zA-Z0-9_.]{1,64}"
+            placeholder="Nom de la connexion (ex: perso)"
+            value={oaName}
+            onChange={(e) => setOaName(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="password"
+            required
+            placeholder="Cle API OpenAI (sk-...)"
+            value={oaApiKey}
+            onChange={(e) => setOaApiKey(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="text"
+            placeholder="Organisation (optionnel, org-...)"
+            value={oaOrganization}
+            onChange={(e) => setOaOrganization(e.target.value)}
+            className={inputClass}
+          />
+          <button
+            type="submit"
+            disabled={oaSubmitting}
+            className={primaryButtonClass}
+          >
+            {oaSubmitting ? 'Test en cours...' : 'Tester la connexion'}
+          </button>
+        </form>
+
+        {oaMessage && (
+          <p
+            className={`font-caption-md mt-md ${oaMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {oaMessage.text}
           </p>
         )}
       </section>
