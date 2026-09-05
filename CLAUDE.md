@@ -9,15 +9,18 @@ Protocol (Streamable HTTP) servers for Garmin Connect, Home Assistant, YouTube, 
 data (the `health.sloboda.fr` companion service), Docker container logs (a shared MinIO bucket
 that Vector ships logs into — see the `home-monitoring` repo), Cookidoo (Thermomix recipes,
 shopping list, meal planning), Instagram (Meta Graph API — profile/media/insights/DMs on
-professional accounts), and OpenAI (chat completions, the Responses API, embeddings, images,
-moderations, plus a raw REST passthrough), so Claude (or any MCP client) can call them from
+professional accounts), OpenAI (chat completions, the Responses API, embeddings, images,
+moderations, plus a raw REST passthrough), and Microsoft MarkItDown (stateless document/URL to
+Markdown conversion — PDF, Office docs, images, HTML, EPub, Outlook .msg, YouTube transcripts,
+...), so Claude (or any MCP client) can call them from
 anywhere. Auth is
 delegated to an external SSO (`home-auth`, OAuth2) for the web UI; MCP clients authenticate with a
-per-user API key embedded in the URL. Two separate Python sidecars own login/session logic that
-has no maintained Node equivalent: `garmin-connector` (via the `garminconnect` library) and
-`cookidoo-connector` (via the `cookidoo-api` library).
+per-user API key embedded in the URL. Three separate Python sidecars own logic that has no
+maintained Node equivalent: `garmin-connector` (via the `garminconnect` library),
+`cookidoo-connector` (via the `cookidoo-api` library), and `markitdown-connector` (via the
+`markitdown` library).
 
-Four deployables:
+Six deployables:
 
 - `backend/` — NestJS API + MCP servers + serves the built frontend as static SPA.
 - `frontend/` — React SPA (login, manage stored credentials, issue API keys).
@@ -25,11 +28,14 @@ Four deployables:
   login/MFA/token refresh — no maintained Node equivalent exists).
 - `cookidoo-connector/` — internal-only FastAPI sidecar wrapping `cookidoo-api` (handles Cookidoo
   login/session-cookie persistence — no maintained Node equivalent exists).
+- `markitdown-connector/` — internal-only FastAPI sidecar wrapping `markitdown` (converts
+  documents/URLs to Markdown — no maintained Node equivalent covers the same format surface). No
+  login/session state, unlike the other two sidecars — every call is stateless.
 
 ## Commands
 
-Run from repo root (npm workspaces cover `backend`/`frontend`; `garmin-connector` and
-`cookidoo-connector` are separate Python projects).
+Run from repo root (npm workspaces cover `backend`/`frontend`; `garmin-connector`,
+`cookidoo-connector`, and `markitdown-connector` are separate Python projects).
 
 ```bash
 # Dev servers
@@ -53,20 +59,21 @@ npm run lint                 # eslint on both workspaces
 npm run format                # prettier --write . (repo-wide)
 ```
 
-garmin-connector / cookidoo-connector (Python, FastAPI + uvicorn, separate venv/deps each — not
-part of the npm workspace):
+garmin-connector / cookidoo-connector / markitdown-connector (Python, FastAPI + uvicorn, separate
+venv/deps each — not part of the npm workspace):
 
 ```bash
-cd garmin-connector      # or cookidoo-connector
+cd garmin-connector      # or cookidoo-connector / markitdown-connector
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
 Docker: root `Dockerfile` multi-stage builds frontend → backend → runtime (bundles Litestream for
-SQLite replication to MinIO). `garmin-connector/Dockerfile` and `cookidoo-connector/Dockerfile`
-build each sidecar separately. `deploy/docker-compose.yml` runs all three as sibling services on
-an internal network (sidecars have no published port — only reachable at
-`http://garmin-connector:8000` / `http://cookidoo-connector:8000` from the backend container).
+SQLite replication to MinIO). `garmin-connector/Dockerfile`, `cookidoo-connector/Dockerfile`, and
+`markitdown-connector/Dockerfile` build each sidecar separately. `deploy/docker-compose.yml` runs
+all four as sibling services on an internal network (sidecars have no published port — only
+reachable at `http://garmin-connector:8000` / `http://cookidoo-connector:8000` /
+`http://markitdown-connector:8000` from the backend container).
 
 ## Architecture
 
@@ -185,6 +192,21 @@ only the guard + route need to change; gateways and tool handlers are untouched.
   a raw `openai_request` passthrough for endpoints with no dedicated tool (files, fine-tuning,
   assistants, batches...). Multipart-upload endpoints (audio transcription/translation) are out of
   scope, the same tradeoff as `instagram_publish_media`.
+- **MarkItDown** (`domain/markitdown/markitdown-connector.ts`): no official REST API and no
+  maintained Node/TS library covering the same format surface (PDF, Word/PowerPoint/Excel,
+  images, HTML, CSV/JSON/XML, ZIP, EPub, Outlook `.msg`, YouTube transcripts...). Backend proxies
+  to the `markitdown-connector` Python sidecar over an internal-secret-headed HTTP call, same
+  transport shape as Garmin/Cookidoo. Unlike those two, there is no login/session state and
+  therefore no per-user credential at all — `MarkitdownGateway` (application layer) is a thin
+  pass-through with nothing to load/decrypt/persist, kept only so the MCP controller follows the
+  same controller → gateway → connector shape as every other integration. The route is still
+  guarded by the user's MCP API key (`/api/mcp/markitdown/:apiKey`), same as every other
+  integration, purely to keep the endpoint from being open to anyone who guesses the URL. Two
+  tools: `markitdown_convert_url` (fetch + convert) and `markitdown_convert_content` (base64
+  file content + optional filename). The sidecar installs `markitdown[all]` and calls
+  `MarkItDown().convert(...)` / `.convert_stream(...)` with default settings — Azure Document
+  Intelligence/Content Understanding, LLM-based image descriptions, and the plugin system are
+  intentionally not wired up.
 
 ### Auth model
 

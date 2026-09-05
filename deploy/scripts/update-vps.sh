@@ -5,6 +5,7 @@ DEPLOY_DIR="${DEPLOY_DIR:-/opt/remote-mcps}"
 IMAGE="${IMAGE:-ghcr.io/slobodafr/home-remote-mcps}"
 GARMIN_CONNECTOR_IMAGE="${GARMIN_CONNECTOR_IMAGE:-ghcr.io/slobodafr/home-remote-mcps-garmin-connector}"
 COOKIDOO_CONNECTOR_IMAGE="${COOKIDOO_CONNECTOR_IMAGE:-ghcr.io/slobodafr/home-remote-mcps-cookidoo-connector}"
+MARKITDOWN_CONNECTOR_IMAGE="${MARKITDOWN_CONNECTOR_IMAGE:-ghcr.io/slobodafr/home-remote-mcps-markitdown-connector}"
 
 cd "$DEPLOY_DIR/deploy"
 
@@ -12,6 +13,7 @@ export IMAGE
 export IMAGE_TAG
 export GARMIN_CONNECTOR_IMAGE
 export COOKIDOO_CONNECTOR_IMAGE
+export MARKITDOWN_CONNECTOR_IMAGE
 
 # Images are public - no login needed to pull. Drop any stale/invalid
 # cached credential for ghcr.io first: docker prefers a cached credential

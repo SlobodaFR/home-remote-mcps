@@ -28,6 +28,9 @@ jobs:
           - name: cookidoo-connector
             context: cookidoo-connector
             image: home-remote-mcps-cookidoo-connector
+          - name: markitdown-connector
+            context: markitdown-connector
+            image: home-remote-mcps-markitdown-connector
 
     steps:
       - uses: actions/checkout@v4

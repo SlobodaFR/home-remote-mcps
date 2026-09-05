@@ -15,6 +15,7 @@ services:
     depends_on:
       - garmin-connector
       - cookidoo-connector
+      - markitdown-connector
 
   garmin-connector:
     image: ${GARMIN_CONNECTOR_IMAGE}:${IMAGE_TAG}
@@ -32,6 +33,16 @@ services:
     env_file: cookidoo-connector.env
     # Internal only - no published port. Reached by home-remote-mcps at
     # http://cookidoo-connector:8000 over the compose network.
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+
+  markitdown-connector:
+    image: ${MARKITDOWN_CONNECTOR_IMAGE}:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file: markitdown-connector.env
+    # Internal only - no published port. Reached by home-remote-mcps at
+    # http://markitdown-connector:8000 over the compose network.
     dns:
       - 1.1.1.1
       - 8.8.8.8
