@@ -10,6 +10,34 @@ const inputClass =
 const primaryButtonClass =
   'bg-ink text-on-primary font-button-md rounded-full h-12 px-xl disabled:opacity-50';
 
+function CopyableUrl({ label, url }: { label: string; url: string }) {
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="mb-md">
+      <p className="font-caption-sm text-mute mb-xs">{label}</p>
+      <div className="flex items-stretch gap-sm">
+        <code className="block flex-1 bg-canvas border border-hairline p-md break-all">
+          {url}
+        </code>
+        <button
+          type="button"
+          onClick={() => void handleCopy()}
+          className="shrink-0 bg-ink text-on-primary font-button-md rounded px-md"
+        >
+          {copied ? 'Copie !' : 'Copier'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKeySummary[]>([]);
   const [label, setLabel] = useState('');
@@ -69,37 +97,26 @@ export function ApiKeysPage() {
         </form>
 
         {created && (
-          <div className="mt-lg bg-soft-cloud p-lg font-caption-md break-all">
+          <div className="mt-lg bg-soft-cloud p-lg font-caption-md">
             <p className="text-warning font-body-strong mb-sm">
               Ces URLs ne seront plus jamais affichees. Copie-les maintenant.
             </p>
-            <p className="font-caption-sm text-mute mb-xs">Garmin</p>
-            <code className="block bg-canvas border border-hairline p-md mb-md">
-              {created.mcpUrl}
-            </code>
-            <p className="font-caption-sm text-mute mb-xs">Home Assistant</p>
-            <code className="block bg-canvas border border-hairline p-md mb-md">
-              {created.homeAssistantMcpUrl}
-            </code>
-            <p className="font-caption-sm text-mute mb-xs">Logs Docker</p>
-            <code className="block bg-canvas border border-hairline p-md mb-md">
-              {created.logsMcpUrl}
-            </code>
-            <p className="font-caption-sm text-mute mb-xs">Donnees de sante</p>
-            <code className="block bg-canvas border border-hairline p-md mb-md">
-              {created.personalHealthMcpUrl}
-            </code>
-            <p className="font-caption-sm text-mute mb-xs">YouTube</p>
-            <code className="block bg-canvas border border-hairline p-md mb-md">
-              {created.youtubeMcpUrl}
-            </code>
-            <p className="font-caption-sm text-mute mb-xs">
-              Instagram (remplace &lt;account-name&gt; par le nom choisi pour
-              chaque compte connecte sur la page Identifiants)
-            </p>
-            <code className="block bg-canvas border border-hairline p-md">
-              {created.instagramMcpUrlTemplate}
-            </code>
+            <CopyableUrl label="Garmin" url={created.mcpUrl} />
+            <CopyableUrl
+              label="Home Assistant"
+              url={created.homeAssistantMcpUrl}
+            />
+            <CopyableUrl label="Cookidoo" url={created.cookidooMcpUrl} />
+            <CopyableUrl label="Logs Docker" url={created.logsMcpUrl} />
+            <CopyableUrl
+              label="Donnees de sante"
+              url={created.personalHealthMcpUrl}
+            />
+            <CopyableUrl label="YouTube" url={created.youtubeMcpUrl} />
+            <CopyableUrl
+              label="Instagram (remplace <account-name> par le nom choisi pour chaque compte connecte sur la page Identifiants)"
+              url={created.instagramMcpUrlTemplate}
+            />
           </div>
         )}
       </section>
