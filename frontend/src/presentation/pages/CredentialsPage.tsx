@@ -3,7 +3,44 @@ import {
   apiClient,
   Credential,
   CookidooLocalization,
+  CreatedApiKey,
 } from '../../infrastructure/api-client';
+import { useApiKeySession } from '../api-keys/ApiKeySessionProvider';
+import { CopyButton } from '../components/CopyButton';
+
+// Every credential's MCP URL is built from the same generated API key (one
+// key works across all services) - this maps a credential's `service` value
+// to the matching field on CreatedApiKey, substituting the account name for
+// Instagram's per-account URL template.
+function mcpUrlFor(
+  credential: Credential,
+  createdKey: CreatedApiKey | null,
+): string | null {
+  if (!createdKey) return null;
+  switch (credential.service) {
+    case 'garmin':
+      return createdKey.mcpUrl;
+    case 'home_assistant':
+      return createdKey.homeAssistantMcpUrl;
+    case 'cookidoo':
+      return createdKey.cookidooMcpUrl;
+    case 'logs':
+      return createdKey.logsMcpUrl;
+    case 'personal_health':
+      return createdKey.personalHealthMcpUrl;
+    case 'youtube':
+      return createdKey.youtubeMcpUrl;
+    default:
+      if (credential.service.startsWith('instagram:')) {
+        const accountName = credential.service.slice('instagram:'.length);
+        return createdKey.instagramMcpUrlTemplate.replace(
+          '<account-name>',
+          accountName,
+        );
+      }
+      return null;
+  }
+}
 
 type Step = 'form' | 'mfa';
 interface Message {
@@ -29,6 +66,7 @@ const primaryButtonClass =
   'bg-ink text-on-primary font-button-md rounded-full h-12 disabled:opacity-50';
 
 export function CredentialsPage() {
+  const { createdKey, generating, generate } = useApiKeySession();
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [step, setStep] = useState<Step>('form');
   const [email, setEmail] = useState('');
@@ -360,6 +398,7 @@ export function CredentialsPage() {
 
   function renderConnectedCard(label: string, credential: Credential | null) {
     if (!credential) return null;
+    const mcpUrl = mcpUrlFor(credential, createdKey);
     return (
       <div
         key={credential.id}
@@ -382,12 +421,21 @@ export function CredentialsPage() {
             </div>
           )}
         </div>
-        <button
-          onClick={() => void handleDelete(credential.id)}
-          className="self-start font-caption-md text-error hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
-        >
-          Supprimer
-        </button>
+        <div className="flex items-center gap-md self-start">
+          {mcpUrl && (
+            <CopyButton
+              url={mcpUrl}
+              label="Copier le lien MCP"
+              className="font-caption-md text-ink hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            />
+          )}
+          <button
+            onClick={() => void handleDelete(credential.id)}
+            className="font-caption-md text-error hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
+          >
+            Supprimer
+          </button>
+        </div>
       </div>
     );
   }
@@ -396,6 +444,26 @@ export function CredentialsPage() {
     <main className="max-w-xl mx-auto px-lg sm:px-xl py-xl sm:py-section flex flex-col gap-xl sm:gap-section">
       <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
+        {createdKey ? (
+          <p className="font-caption-sm text-mute">
+            Liens MCP generes avec la cle &quot;{createdKey.label}&quot; pour
+            cette session (visible dans l&apos;onglet Cles API).
+          </p>
+        ) : (
+          <div className="bg-soft-cloud p-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
+            <p className="font-caption-md text-mute">
+              Genere une cle API pour copier le lien MCP de chaque service
+              connecte.
+            </p>
+            <button
+              onClick={() => void generate()}
+              disabled={generating}
+              className="shrink-0 bg-ink text-on-primary font-button-md rounded-full h-10 px-lg disabled:opacity-50"
+            >
+              {generating ? 'Generation...' : 'Generer une cle API'}
+            </button>
+          </div>
+        )}
         {garmin ||
         cookidoo ||
         homeAssistant ||

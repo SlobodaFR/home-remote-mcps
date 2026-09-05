@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
-import {
-  apiClient,
-  ApiKeySummary,
-  CreatedApiKey,
-} from '../../infrastructure/api-client';
+import { apiClient, ApiKeySummary } from '../../infrastructure/api-client';
+import { useApiKeySession } from '../api-keys/ApiKeySessionProvider';
+import { CopyButton } from '../components/CopyButton';
 
 const inputClass =
   'bg-soft-cloud rounded px-md py-sm font-body-md text-ink placeholder:text-mute outline-none focus:ring-2 focus:ring-ink flex-1';
@@ -11,14 +9,6 @@ const primaryButtonClass =
   'bg-ink text-on-primary font-button-md rounded-full h-12 px-xl disabled:opacity-50';
 
 function CopyableUrl({ label, url }: { label: string; url: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   return (
     <div className="mb-md">
       <p className="font-caption-sm text-mute mb-xs">{label}</p>
@@ -26,13 +16,7 @@ function CopyableUrl({ label, url }: { label: string; url: string }) {
         <code className="block flex-1 bg-canvas border border-hairline p-md break-all">
           {url}
         </code>
-        <button
-          type="button"
-          onClick={() => void handleCopy()}
-          className="shrink-0 bg-ink text-on-primary font-button-md rounded px-md"
-        >
-          {copied ? 'Copie !' : 'Copier'}
-        </button>
+        <CopyButton url={url} />
       </div>
     </div>
   );
@@ -41,8 +25,11 @@ function CopyableUrl({ label, url }: { label: string; url: string }) {
 export function ApiKeysPage() {
   const [keys, setKeys] = useState<ApiKeySummary[]>([]);
   const [label, setLabel] = useState('');
-  const [created, setCreated] = useState<CreatedApiKey | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    createdKey: created,
+    generating: submitting,
+    generate,
+  } = useApiKeySession();
 
   function reload() {
     apiClient.fetchApiKeys().then(setKeys).catch(console.error);
@@ -52,15 +39,9 @@ export function ApiKeysPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
-    try {
-      const result = await apiClient.createApiKey(label || 'Claude');
-      setCreated(result);
-      setLabel('');
-      reload();
-    } finally {
-      setSubmitting(false);
-    }
+    await generate(label);
+    setLabel('');
+    reload();
   }
 
   async function handleRevoke(id: string) {

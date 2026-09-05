@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { ApiKeySessionProvider } from './presentation/api-keys/ApiKeySessionProvider';
 import App from './presentation/App';
 import { AuthProvider } from './presentation/auth/AuthProvider';
 import './index.css';
@@ -14,7 +15,9 @@ ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ApiKeySessionProvider>
+          <App />
+        </ApiKeySessionProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,
