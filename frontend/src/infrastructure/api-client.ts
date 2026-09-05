@@ -76,6 +76,9 @@ export type LogsConnectionResponse =
 export type PersonalHealthConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
+export type InstagramConnectionResponse =
+  { status: 'ok' } | { status: 'error'; message: string };
+
 export interface StartYoutubeConnectionResponse {
   pendingId: string;
   authorizeUrl: string;
@@ -99,6 +102,7 @@ export interface CreatedApiKey {
   logsMcpUrl: string;
   personalHealthMcpUrl: string;
   youtubeMcpUrl: string;
+  instagramMcpUrlTemplate: string;
   createdAt: string;
 }
 
@@ -185,6 +189,16 @@ export const apiClient = {
       '/credentials/personal-health',
       'POST',
       { apiKey },
+    );
+  },
+  saveInstagramConnection(
+    accountName: string,
+    accessToken: string,
+  ): Promise<InstagramConnectionResponse> {
+    return sendJson<InstagramConnectionResponse>(
+      '/credentials/instagram',
+      'POST',
+      { accountName, accessToken },
     );
   },
   startYoutubeConnection(

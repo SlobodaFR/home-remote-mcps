@@ -24,6 +24,10 @@ import {
   SaveHomeAssistantConnectionUseCase,
 } from '../../../application/credentials/save-home-assistant-connection.use-case';
 import {
+  SaveInstagramConnectionResult,
+  SaveInstagramConnectionUseCase,
+} from '../../../application/credentials/save-instagram-connection.use-case';
+import {
   SaveLogsConnectionResult,
   SaveLogsConnectionUseCase,
 } from '../../../application/credentials/save-logs-connection.use-case';
@@ -51,6 +55,7 @@ import {
 import { Public } from '../decorators/public.decorator';
 import { SaveCookidooConnectionDto } from '../dto/save-cookidoo-connection.dto';
 import { SaveHomeAssistantConnectionDto } from '../dto/save-home-assistant-connection.dto';
+import { SaveInstagramConnectionDto } from '../dto/save-instagram-connection.dto';
 import { SaveLogsConnectionDto } from '../dto/save-logs-connection.dto';
 import { SavePersonalHealthConnectionDto } from '../dto/save-personal-health-connection.dto';
 import { StartGarminLoginDto } from '../dto/start-garmin-login.dto';
@@ -70,6 +75,7 @@ export class CredentialsController {
     private readonly saveCookidooConnection: SaveCookidooConnectionUseCase,
     private readonly listCookidooLocalizations: ListCookidooLocalizationsUseCase,
     private readonly saveHomeAssistantConnection: SaveHomeAssistantConnectionUseCase,
+    private readonly saveInstagramConnection: SaveInstagramConnectionUseCase,
     private readonly saveLogsConnection: SaveLogsConnectionUseCase,
     private readonly savePersonalHealthConnection: SavePersonalHealthConnectionUseCase,
     private readonly startYoutubeConnection: StartYoutubeConnectionUseCase,
@@ -133,6 +139,18 @@ export class CredentialsController {
       user.id,
       dto.baseUrl,
       dto.token,
+    );
+  }
+
+  @Post('instagram')
+  async connectInstagram(
+    @CurrentUser() user: CurrentUserPayload,
+    @Body() dto: SaveInstagramConnectionDto,
+  ): Promise<SaveInstagramConnectionResult> {
+    return this.saveInstagramConnection.execute(
+      user.id,
+      dto.accountName,
+      dto.accessToken,
     );
   }
 

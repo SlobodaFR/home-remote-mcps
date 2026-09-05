@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `home-remote-mcps` — a personal remote MCP gateway. A NestJS backend exposes Model Context
 Protocol (Streamable HTTP) servers for Garmin Connect, Home Assistant, YouTube, personal health
 data (the `health.sloboda.fr` companion service), Docker container logs (a shared MinIO bucket
-that Vector ships logs into — see the `home-monitoring` repo), and Cookidoo (Thermomix recipes,
-shopping list, meal planning), so Claude (or any MCP client) can call them from anywhere. Auth is
+that Vector ships logs into — see the `home-monitoring` repo), Cookidoo (Thermomix recipes,
+shopping list, meal planning), and Instagram (Meta Graph API — profile/media/insights/DMs on
+professional accounts), so Claude (or any MCP client) can call them from anywhere. Auth is
 delegated to an external SSO (`home-auth`, OAuth2) for the web UI; MCP clients authenticate with a
 per-user API key embedded in the URL. Two separate Python sidecars own login/session logic that
 has no maintained Node equivalent: `garmin-connector` (via the `garminconnect` library) and
@@ -94,7 +95,9 @@ Each MCP integration follows the same shape (see `garmin-mcp.module.ts` /
 
 1. Route is `POST /api/mcp/<service>/:apiKey` — the API key travels in the URL path, not an
    `Authorization` header, because Claude's remote-connector UI only accepts a URL with no way to
-   attach a custom header.
+   attach a custom header. Instagram is the one exception: since a user can hold several Instagram
+   credentials at once, its route is `POST /api/mcp/instagram/:apiKey/:accountName`, with the extra
+   segment picking which stored account to use (see the Instagram bullet below).
 2. `@Public()` on the controller bypasses the global `JwtAuthGuard` (browser session auth);
    `ApiKeyGuard` (service-specific, `@UseGuards`) resolves the API key to a user id instead via
    `ResolveUserFromApiKeyUseCase`.
@@ -150,6 +153,22 @@ only the guard + route need to change; gateways and tool handlers are untouched.
   currently pins `cookidoo-api` to a fork commit, not a PyPI release, to get recipe creation
   (`create_custom_recipe`/`update_custom_recipe`, miaucl/cookidoo-api#238) ahead of that PR
   merging upstream — re-pin to a released version once it ships.
+- **Instagram** (`domain/instagram/instagram-connector.ts`): official Meta Graph API, secured by a
+  long-lived Facebook Page access token passed as an `access_token` query param — no sidecar,
+  same "no login/MFA dance, one `request` primitive" shape as Home Assistant/personal-health.
+  Reproduces the tool surface of the reference `jlbadano/ig-mcp` (Python) project directly in TS.
+  Unlike every other integration, one user can hold _several_ Instagram credentials at once (one
+  per Instagram professional account), so `service` alone can't identify a credential — it's
+  namespaced `instagram:<accountName>` (see `save-instagram-connection.use-case.ts`), and
+  `accountName` is also the extra MCP URL segment (`/api/mcp/instagram/<apiKey>/<accountName>`)
+  that picks which one an MCP client talks to. Connecting an account resolves and stores the
+  linked Facebook Page id + Instagram professional-account id via `GET /me/accounts` at save time
+  (`InstagramConnector.resolveAccount`), so tools never need to ask for those ids. DM tools
+  (`instagram_get_conversations`/`instagram_get_conversation_messages`/`instagram_send_dm`)
+  require the `instagram_manage_messages` permission with Advanced Access from Meta (App Review) —
+  they'll surface a permission error otherwise. `instagram_publish_media` skips the reference
+  project's client-side image-aspect-ratio validation (would need an image-decoding dependency);
+  the Graph API itself rejects unsupported ratios with a clear error.
 
 ### Auth model
 
@@ -165,8 +184,9 @@ Two independent auth mechanisms coexist:
   (`interfaces/http/controllers/api-keys.controller.ts`).
 
 Stored credentials (Garmin session tokens, Cookidoo session cookies, HA long-lived token, YouTube
-OAuth tokens) are encrypted at rest with `CredentialCrypto` (AES-GCM, `CREDENTIALS_ENCRYPTION_KEY`)
-— the backend never stores or inspects raw upstream passwords, only post-login session material.
+OAuth tokens, Instagram Page access tokens) are encrypted at rest with `CredentialCrypto` (AES-GCM,
+`CREDENTIALS_ENCRYPTION_KEY`) — the backend never stores or inspects raw upstream passwords, only
+post-login session material.
 
 ### Persistence
 
@@ -179,7 +199,7 @@ SQLite file to MinIO via Litestream (`backend/litestream.yml`, `docker-entrypoin
 ### Frontend
 
 Small React SPA (`frontend/src/presentation/`): `LoginPage` (kicks off `home-auth` OAuth),
-`CredentialsPage` (connect/manage Garmin, Cookidoo, HA, YouTube), `ApiKeysPage` (issue/revoke MCP API
+`CredentialsPage` (connect/manage Garmin, Cookidoo, HA, YouTube, Instagram), `ApiKeysPage` (issue/revoke MCP API
 keys). `AuthProvider` + `RequireAuth` gate routes on the session cookie; `infrastructure/api-client.ts`
 is the one fetch wrapper. Built and served as static files by the NestJS backend in production
 (`ServeStaticModule`, SPA fallback excluding `/api*`).

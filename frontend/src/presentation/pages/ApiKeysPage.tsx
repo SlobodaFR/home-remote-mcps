@@ -90,8 +90,15 @@ export function ApiKeysPage() {
               {created.personalHealthMcpUrl}
             </code>
             <p className="font-caption-sm text-mute mb-xs">YouTube</p>
-            <code className="block bg-canvas border border-hairline p-md">
+            <code className="block bg-canvas border border-hairline p-md mb-md">
               {created.youtubeMcpUrl}
+            </code>
+            <p className="font-caption-sm text-mute mb-xs">
+              Instagram (remplace &lt;account-name&gt; par le nom choisi pour
+              chaque compte connecte sur la page Identifiants)
+            </p>
+            <code className="block bg-canvas border border-hairline p-md">
+              {created.instagramMcpUrlTemplate}
             </code>
           </div>
         )}

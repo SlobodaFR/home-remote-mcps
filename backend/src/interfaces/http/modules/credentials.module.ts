@@ -6,6 +6,7 @@ import { ListCookidooLocalizationsUseCase } from '../../../application/credentia
 import { ListCredentialsUseCase } from '../../../application/credentials/list-credentials.use-case';
 import { SaveCookidooConnectionUseCase } from '../../../application/credentials/save-cookidoo-connection.use-case';
 import { SaveHomeAssistantConnectionUseCase } from '../../../application/credentials/save-home-assistant-connection.use-case';
+import { SaveInstagramConnectionUseCase } from '../../../application/credentials/save-instagram-connection.use-case';
 import { SaveLogsConnectionUseCase } from '../../../application/credentials/save-logs-connection.use-case';
 import { SavePersonalHealthConnectionUseCase } from '../../../application/credentials/save-personal-health-connection.use-case';
 import { StartGarminLoginUseCase } from '../../../application/credentials/start-garmin-login.use-case';
@@ -27,6 +28,7 @@ import { CredentialsController } from '../controllers/credentials.controller';
     SaveCookidooConnectionUseCase,
     ListCookidooLocalizationsUseCase,
     SaveHomeAssistantConnectionUseCase,
+    SaveInstagramConnectionUseCase,
     SaveLogsConnectionUseCase,
     SavePersonalHealthConnectionUseCase,
     StartYoutubeConnectionUseCase,

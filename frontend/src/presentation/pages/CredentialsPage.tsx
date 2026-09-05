@@ -66,6 +66,11 @@ export function CredentialsPage() {
   const [ytMessage, setYtMessage] = useState<Message | null>(null);
   const [ytSubmitting, setYtSubmitting] = useState(false);
 
+  const [igAccountName, setIgAccountName] = useState('');
+  const [igAccessToken, setIgAccessToken] = useState('');
+  const [igMessage, setIgMessage] = useState<Message | null>(null);
+  const [igSubmitting, setIgSubmitting] = useState(false);
+
   const garmin = credentials.find((c) => c.service === 'garmin') ?? null;
   const homeAssistant =
     credentials.find((c) => c.service === 'home_assistant') ?? null;
@@ -74,6 +79,9 @@ export function CredentialsPage() {
     credentials.find((c) => c.service === 'personal_health') ?? null;
   const youtube = credentials.find((c) => c.service === 'youtube') ?? null;
   const cookidoo = credentials.find((c) => c.service === 'cookidoo') ?? null;
+  const instagramAccounts = credentials.filter((c) =>
+    c.service.startsWith('instagram:'),
+  );
 
   const cookidooCountries = useMemo(
     () => [...new Set(cookidooLocalizations.map((l) => l.countryCode))].sort(),
@@ -303,6 +311,35 @@ export function CredentialsPage() {
     }
   }
 
+  async function handleConnectInstagram() {
+    setIgSubmitting(true);
+    setIgMessage(null);
+    try {
+      const result = await apiClient.saveInstagramConnection(
+        igAccountName,
+        igAccessToken,
+      );
+      if (result.status === 'ok') {
+        setIgMessage({
+          kind: 'success',
+          text: 'Connexion Instagram validee et stockee.',
+        });
+        setIgAccountName('');
+        setIgAccessToken('');
+        reload();
+      } else {
+        setIgMessage({ kind: 'error', text: result.message });
+      }
+    } catch (error) {
+      setIgMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    } finally {
+      setIgSubmitting(false);
+    }
+  }
+
   async function handleConnectYoutube() {
     setYtSubmitting(true);
     setYtMessage(null);
@@ -364,7 +401,8 @@ export function CredentialsPage() {
         homeAssistant ||
         logs ||
         personalHealth ||
-        youtube ? (
+        youtube ||
+        instagramAccounts.length > 0 ? (
           <>
             {renderConnectedCard('Garmin Connect', garmin)}
             {renderConnectedCard('Cookidoo', cookidoo)}
@@ -372,6 +410,12 @@ export function CredentialsPage() {
             {renderConnectedCard('Logs Docker', logs)}
             {renderConnectedCard('Donnees de sante', personalHealth)}
             {renderConnectedCard('YouTube', youtube)}
+            {instagramAccounts.map((credential) =>
+              renderConnectedCard(
+                `Instagram: ${credential.service.slice('instagram:'.length)}`,
+                credential,
+              ),
+            )}
           </>
         ) : (
           <p className="font-body-md text-mute">
@@ -747,6 +791,58 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${ytMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {ytMessage.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">Connecter Instagram</h2>
+        <p className="font-body-md text-mute mb-lg">
+          Un compte pro Instagram (business/creator) relie a une Page Facebook,
+          et un jeton d&apos;acces longue duree de cette Page (Graph API Meta).
+          Plusieurs comptes peuvent etre connectes: choisis un nom court pour
+          chacun (lettres/chiffres/points/underscores), il sera utilise dans
+          l&apos;URL MCP correspondante.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectInstagram();
+          }}
+          className="flex flex-col gap-md"
+        >
+          <input
+            type="text"
+            required
+            pattern="[a-zA-Z0-9_.]{1,64}"
+            placeholder="Nom du compte (ex: perso)"
+            value={igAccountName}
+            onChange={(e) => setIgAccountName(e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="password"
+            required
+            placeholder="Jeton d'acces longue duree (Page access token)"
+            value={igAccessToken}
+            onChange={(e) => setIgAccessToken(e.target.value)}
+            className={inputClass}
+          />
+          <button
+            type="submit"
+            disabled={igSubmitting}
+            className={primaryButtonClass}
+          >
+            {igSubmitting ? 'Test en cours...' : 'Tester la connexion'}
+          </button>
+        </form>
+
+        {igMessage && (
+          <p
+            className={`font-caption-md mt-md ${igMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {igMessage.text}
           </p>
         )}
       </section>

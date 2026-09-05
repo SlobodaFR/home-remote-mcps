@@ -69,6 +69,10 @@ export class ApiKeysController {
         `/api/mcp/youtube/${created.rawKey}`,
         publicUrl,
       ).toString(),
+      instagramMcpUrlTemplate: new URL(
+        `/api/mcp/instagram/${created.rawKey}/<account-name>`,
+        publicUrl,
+      ).toString(),
       createdAt: created.createdAt.toISOString(),
     };
   }
