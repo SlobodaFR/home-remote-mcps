@@ -10,7 +10,7 @@ import { apiClient, CreatedApiKey } from '../../infrastructure/api-client';
 interface ApiKeySessionContextValue {
   createdKey: CreatedApiKey | null;
   generating: boolean;
-  generate: (label?: string) => Promise<void>;
+  generate: (label?: string) => Promise<CreatedApiKey>;
 }
 
 const ApiKeySessionContext = createContext<ApiKeySessionContextValue | null>(
@@ -31,6 +31,7 @@ export function ApiKeySessionProvider({ children }: { children: ReactNode }) {
       const trimmedLabel = label ?? '';
       const result = await apiClient.createApiKey(trimmedLabel || 'Claude');
       setCreatedKey(result);
+      return result;
     } finally {
       setGenerating(false);
     }

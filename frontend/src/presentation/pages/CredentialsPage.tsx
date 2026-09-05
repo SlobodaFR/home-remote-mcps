@@ -6,7 +6,6 @@ import {
   CreatedApiKey,
 } from '../../infrastructure/api-client';
 import { useApiKeySession } from '../api-keys/ApiKeySessionProvider';
-import { CopyButton } from '../components/CopyButton';
 
 // Every credential's MCP URL is built from the same generated API key (one
 // key works across all services) - this maps a credential's `service` value
@@ -14,9 +13,8 @@ import { CopyButton } from '../components/CopyButton';
 // Instagram's per-account URL template.
 function mcpUrlFor(
   credential: Credential,
-  createdKey: CreatedApiKey | null,
+  createdKey: CreatedApiKey,
 ): string | null {
-  if (!createdKey) return null;
   switch (credential.service) {
     case 'garmin':
       return createdKey.mcpUrl;
@@ -40,6 +38,40 @@ function mcpUrlFor(
       }
       return null;
   }
+}
+
+// Reuses the session's API key if one was already generated (on this page or
+// on /api-keys); otherwise generates one on first click, so a copy works in
+// a single click regardless of whether a key already exists for the session.
+function McpCopyButton({ credential }: { credential: Credential }) {
+  const { createdKey, generate } = useApiKeySession();
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleClick() {
+    setBusy(true);
+    try {
+      const key = createdKey ?? (await generate());
+      const url = mcpUrlFor(credential, key);
+      if (!url) return;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleClick()}
+      disabled={busy}
+      className="font-caption-md text-ink hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink disabled:opacity-50"
+    >
+      {copied ? 'Copie !' : busy ? 'Generation...' : 'Copier le lien MCP'}
+    </button>
+  );
 }
 
 type Step = 'form' | 'mfa';
@@ -66,7 +98,7 @@ const primaryButtonClass =
   'bg-ink text-on-primary font-button-md rounded-full h-12 disabled:opacity-50';
 
 export function CredentialsPage() {
-  const { createdKey, generating, generate } = useApiKeySession();
+  const { createdKey } = useApiKeySession();
   const [credentials, setCredentials] = useState<Credential[]>([]);
   const [step, setStep] = useState<Step>('form');
   const [email, setEmail] = useState('');
@@ -398,7 +430,6 @@ export function CredentialsPage() {
 
   function renderConnectedCard(label: string, credential: Credential | null) {
     if (!credential) return null;
-    const mcpUrl = mcpUrlFor(credential, createdKey);
     return (
       <div
         key={credential.id}
@@ -422,13 +453,7 @@ export function CredentialsPage() {
           )}
         </div>
         <div className="flex items-center gap-md self-start">
-          {mcpUrl && (
-            <CopyButton
-              url={mcpUrl}
-              label="Copier le lien MCP"
-              className="font-caption-md text-ink hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-            />
-          )}
+          <McpCopyButton credential={credential} />
           <button
             onClick={() => void handleDelete(credential.id)}
             className="font-caption-md text-error hover:underline rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-error"
@@ -444,25 +469,11 @@ export function CredentialsPage() {
     <main className="max-w-xl mx-auto px-lg sm:px-xl py-xl sm:py-section flex flex-col gap-xl sm:gap-section">
       <section className="flex flex-col gap-md">
         <h2 className="font-heading-lg mb-md">Services connectes</h2>
-        {createdKey ? (
+        {createdKey && (
           <p className="font-caption-sm text-mute">
             Liens MCP generes avec la cle &quot;{createdKey.label}&quot; pour
             cette session (visible dans l&apos;onglet Cles API).
           </p>
-        ) : (
-          <div className="bg-soft-cloud p-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-sm">
-            <p className="font-caption-md text-mute">
-              Genere une cle API pour copier le lien MCP de chaque service
-              connecte.
-            </p>
-            <button
-              onClick={() => void generate()}
-              disabled={generating}
-              className="shrink-0 bg-ink text-on-primary font-button-md rounded-full h-10 px-lg disabled:opacity-50"
-            >
-              {generating ? 'Generation...' : 'Generer une cle API'}
-            </button>
-          </div>
         )}
         {garmin ||
         cookidoo ||
