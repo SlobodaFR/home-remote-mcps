@@ -4,6 +4,7 @@ import { GarminConnector } from '../domain/garmin/garmin-connector';
 import { HomeAssistantConnector } from '../domain/home-assistant/home-assistant-connector';
 import { InstagramConnector } from '../domain/instagram/instagram-connector';
 import { LogsConnector } from '../domain/logs/log-connector';
+import { MarkitdownConnector } from '../domain/markitdown/markitdown-connector';
 import { OpenAiConnector } from '../domain/openai/openai-connector';
 import { PersonalHealthConnector } from '../domain/personal-health/personal-health-connector';
 import { CredentialCrypto } from '../domain/shared/credential-crypto';
@@ -14,6 +15,7 @@ import { HttpGarminConnector } from './garmin/http-garmin-connector';
 import { HttpHomeAssistantConnector } from './home-assistant/http-home-assistant-connector';
 import { HttpInstagramConnector } from './instagram/http-instagram-connector';
 import { MinioLogsConnector } from './logs/minio-logs-connector';
+import { HttpMarkitdownConnector } from './markitdown/http-markitdown-connector';
 import { HttpOpenAiConnector } from './openai/http-openai-connector';
 import { HttpPersonalHealthConnector } from './personal-health/http-personal-health-connector';
 import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
@@ -28,6 +30,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
     { provide: HomeAssistantConnector, useClass: HttpHomeAssistantConnector },
     { provide: InstagramConnector, useClass: HttpInstagramConnector },
     { provide: LogsConnector, useClass: MinioLogsConnector },
+    { provide: MarkitdownConnector, useClass: HttpMarkitdownConnector },
     { provide: OpenAiConnector, useClass: HttpOpenAiConnector },
     {
       provide: PersonalHealthConnector,
@@ -42,6 +45,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
     HomeAssistantConnector,
     InstagramConnector,
     LogsConnector,
+    MarkitdownConnector,
     OpenAiConnector,
     PersonalHealthConnector,
     YoutubeConnector,

@@ -28,6 +28,8 @@ function mcpUrlFor(
       return createdKey.personalHealthMcpUrl;
     case 'youtube':
       return createdKey.youtubeMcpUrl;
+    case 'markitdown':
+      return createdKey.markitdownMcpUrl;
     default:
       if (credential.service.startsWith('instagram:')) {
         const accountName = credential.service.slice('instagram:'.length);
@@ -134,6 +136,11 @@ export function CredentialsPage() {
   const [logsMessage, setLogsMessage] = useState<Message | null>(null);
   const [logsSubmitting, setLogsSubmitting] = useState(false);
 
+  const [markitdownMessage, setMarkitdownMessage] = useState<Message | null>(
+    null,
+  );
+  const [markitdownSubmitting, setMarkitdownSubmitting] = useState(false);
+
   const [healthApiKey, setHealthApiKey] = useState('');
   const [healthMessage, setHealthMessage] = useState<Message | null>(null);
   const [healthSubmitting, setHealthSubmitting] = useState(false);
@@ -158,6 +165,8 @@ export function CredentialsPage() {
   const homeAssistant =
     credentials.find((c) => c.service === 'home_assistant') ?? null;
   const logs = credentials.find((c) => c.service === 'logs') ?? null;
+  const markitdown =
+    credentials.find((c) => c.service === 'markitdown') ?? null;
   const personalHealth =
     credentials.find((c) => c.service === 'personal_health') ?? null;
   const youtube = credentials.find((c) => c.service === 'youtube') ?? null;
@@ -372,6 +381,30 @@ export function CredentialsPage() {
     }
   }
 
+  async function handleConnectMarkitdown() {
+    setMarkitdownSubmitting(true);
+    setMarkitdownMessage(null);
+    try {
+      const result = await apiClient.saveMarkitdownConnection();
+      if (result.status === 'ok') {
+        setMarkitdownMessage({
+          kind: 'success',
+          text: 'Connexion MarkItDown validee et stockee.',
+        });
+        reload();
+      } else {
+        setMarkitdownMessage({ kind: 'error', text: result.message });
+      }
+    } catch (error) {
+      setMarkitdownMessage({
+        kind: 'error',
+        text: error instanceof Error ? error.message : 'Erreur inconnue',
+      });
+    } finally {
+      setMarkitdownSubmitting(false);
+    }
+  }
+
   async function handleConnectPersonalHealth() {
     setHealthSubmitting(true);
     setHealthMessage(null);
@@ -528,6 +561,7 @@ export function CredentialsPage() {
         logs ||
         personalHealth ||
         youtube ||
+        markitdown ||
         instagramAccounts.length > 0 ||
         openaiConnections.length > 0 ? (
           <>
@@ -537,6 +571,7 @@ export function CredentialsPage() {
             {renderConnectedCard('Logs Docker', logs)}
             {renderConnectedCard('Donnees de sante', personalHealth)}
             {renderConnectedCard('YouTube', youtube)}
+            {renderConnectedCard('MarkItDown', markitdown)}
             {instagramAccounts.map((credential) =>
               renderConnectedCard(
                 `Instagram: ${credential.service.slice('instagram:'.length)}`,
@@ -809,6 +844,38 @@ export function CredentialsPage() {
             className={`font-caption-md mt-md ${logsMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
           >
             {logsMessage.text}
+          </p>
+        )}
+      </section>
+
+      <section className="bg-canvas border border-hairline p-xl">
+        <h2 className="font-heading-lg mb-xs">MarkItDown</h2>
+        <p className="font-body-md text-mute mb-lg">
+          Conversion de documents/URLs (PDF, Office, images, HTML, ...) en
+          Markdown. Rien a saisir - ce test verifie juste que le service est
+          joignable.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void handleConnectMarkitdown();
+          }}
+        >
+          <button
+            type="submit"
+            disabled={markitdownSubmitting}
+            className={primaryButtonClass}
+          >
+            {markitdownSubmitting ? 'Test en cours...' : 'Tester la connexion'}
+          </button>
+        </form>
+
+        {markitdownMessage && (
+          <p
+            className={`font-caption-md mt-md ${markitdownMessage.kind === 'success' ? 'text-success' : 'text-error'}`}
+          >
+            {markitdownMessage.text}
           </p>
         )}
       </section>

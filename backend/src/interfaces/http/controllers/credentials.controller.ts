@@ -32,6 +32,10 @@ import {
   SaveLogsConnectionUseCase,
 } from '../../../application/credentials/save-logs-connection.use-case';
 import {
+  SaveMarkitdownConnectionResult,
+  SaveMarkitdownConnectionUseCase,
+} from '../../../application/credentials/save-markitdown-connection.use-case';
+import {
   SaveOpenAiConnectionResult,
   SaveOpenAiConnectionUseCase,
 } from '../../../application/credentials/save-openai-connection.use-case';
@@ -82,6 +86,7 @@ export class CredentialsController {
     private readonly saveHomeAssistantConnection: SaveHomeAssistantConnectionUseCase,
     private readonly saveInstagramConnection: SaveInstagramConnectionUseCase,
     private readonly saveLogsConnection: SaveLogsConnectionUseCase,
+    private readonly saveMarkitdownConnection: SaveMarkitdownConnectionUseCase,
     private readonly saveOpenAiConnection: SaveOpenAiConnectionUseCase,
     private readonly savePersonalHealthConnection: SavePersonalHealthConnectionUseCase,
     private readonly startYoutubeConnection: StartYoutubeConnectionUseCase,
@@ -166,6 +171,13 @@ export class CredentialsController {
     @Body() dto: SaveLogsConnectionDto,
   ): Promise<SaveLogsConnectionResult> {
     return this.saveLogsConnection.execute(user.id, dto.basePath);
+  }
+
+  @Post('markitdown')
+  async connectMarkitdown(
+    @CurrentUser() user: CurrentUserPayload,
+  ): Promise<SaveMarkitdownConnectionResult> {
+    return this.saveMarkitdownConnection.execute(user.id);
   }
 
   @Post('openai')

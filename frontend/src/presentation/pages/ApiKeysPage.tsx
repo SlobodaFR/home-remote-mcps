@@ -94,6 +94,7 @@ export function ApiKeysPage() {
               url={created.personalHealthMcpUrl}
             />
             <CopyableUrl label="YouTube" url={created.youtubeMcpUrl} />
+            <CopyableUrl label="MarkItDown" url={created.markitdownMcpUrl} />
             <CopyableUrl
               label="Instagram (remplace <account-name> par le nom choisi pour chaque compte connecte sur la page Identifiants)"
               url={created.instagramMcpUrlTemplate}

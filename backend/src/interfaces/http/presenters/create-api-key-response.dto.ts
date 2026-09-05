@@ -15,6 +15,8 @@ export interface CreateApiKeyResponseDto {
   personalHealthMcpUrl: string;
   /** Same key, YouTube MCP endpoint - add as another custom connector in Claude. */
   youtubeMcpUrl: string;
+  /** Same key, MarkItDown (document/URL to Markdown) MCP endpoint - add as another custom connector in Claude. */
+  markitdownMcpUrl: string;
   /**
    * Same key, Instagram MCP endpoint template - ends in a placeholder
    * because Instagram supports several accounts per user: replace

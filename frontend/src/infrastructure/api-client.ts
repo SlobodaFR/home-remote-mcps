@@ -73,6 +73,9 @@ export interface CookidooLocalization {
 export type LogsConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
+export type MarkitdownConnectionResponse =
+  { status: 'ok' } | { status: 'error'; message: string };
+
 export type PersonalHealthConnectionResponse =
   { status: 'ok' } | { status: 'error'; message: string };
 
@@ -105,6 +108,7 @@ export interface CreatedApiKey {
   logsMcpUrl: string;
   personalHealthMcpUrl: string;
   youtubeMcpUrl: string;
+  markitdownMcpUrl: string;
   instagramMcpUrlTemplate: string;
   openaiMcpUrlTemplate: string;
   createdAt: string;
@@ -185,6 +189,12 @@ export const apiClient = {
     return sendJson<LogsConnectionResponse>('/credentials/logs', 'POST', {
       basePath,
     });
+  },
+  saveMarkitdownConnection(): Promise<MarkitdownConnectionResponse> {
+    return sendJson<MarkitdownConnectionResponse>(
+      '/credentials/markitdown',
+      'POST',
+    );
   },
   savePersonalHealthConnection(
     apiKey: string,

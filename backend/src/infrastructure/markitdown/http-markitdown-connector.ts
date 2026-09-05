@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   MarkitdownConnector,
   MarkitdownConvertResult,
+  MarkitdownTestResult,
 } from '../../domain/markitdown/markitdown-connector';
 
 interface SidecarErrorBody {
@@ -27,6 +28,24 @@ export class HttpMarkitdownConnector extends MarkitdownConnector {
     this.sharedSecret = this.config.getOrThrow<string>(
       'MARKITDOWN_CONNECTOR_SECRET',
     );
+  }
+
+  async testConnection(): Promise<MarkitdownTestResult> {
+    try {
+      const response = await fetch(new URL('/health', this.baseUrl));
+      if (!response.ok) {
+        return {
+          status: 'error',
+          message: `markitdown-connector health check failed: ${response.status.toString()}`,
+        };
+      }
+      return { status: 'ok' };
+    } catch (error) {
+      return {
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   async convertUrl(url: string): Promise<MarkitdownConvertResult> {

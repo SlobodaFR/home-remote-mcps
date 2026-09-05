@@ -8,6 +8,7 @@ import { SaveCookidooConnectionUseCase } from '../../../application/credentials/
 import { SaveHomeAssistantConnectionUseCase } from '../../../application/credentials/save-home-assistant-connection.use-case';
 import { SaveInstagramConnectionUseCase } from '../../../application/credentials/save-instagram-connection.use-case';
 import { SaveLogsConnectionUseCase } from '../../../application/credentials/save-logs-connection.use-case';
+import { SaveMarkitdownConnectionUseCase } from '../../../application/credentials/save-markitdown-connection.use-case';
 import { SaveOpenAiConnectionUseCase } from '../../../application/credentials/save-openai-connection.use-case';
 import { SavePersonalHealthConnectionUseCase } from '../../../application/credentials/save-personal-health-connection.use-case';
 import { StartGarminLoginUseCase } from '../../../application/credentials/start-garmin-login.use-case';
@@ -31,6 +32,7 @@ import { CredentialsController } from '../controllers/credentials.controller';
     SaveHomeAssistantConnectionUseCase,
     SaveInstagramConnectionUseCase,
     SaveLogsConnectionUseCase,
+    SaveMarkitdownConnectionUseCase,
     SaveOpenAiConnectionUseCase,
     SavePersonalHealthConnectionUseCase,
     StartYoutubeConnectionUseCase,
