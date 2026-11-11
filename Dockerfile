@@ -44,10 +44,16 @@ COPY --from=backend-build /app/backend/dist backend/dist
 COPY --from=backend-build /app/backend/package.json backend/package.json
 COPY backend/litestream.yml backend/litestream.yml
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+# Run as the image's built-in non-root `node` user (uid 1000). The data dir
+# (volume mount point) and the WORKDIR itself are owned by it, so SQLite,
+# its -wal/-shm files and Litestream's .<db>-litestream/ dir stay writable
+# even when DATABASE_PATH is relative (resolved against /app/backend).
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
-    && mkdir -p /app/backend/data
+    && mkdir -p /app/backend/data \
+    && chown node:node /app/backend /app/backend/data
 VOLUME ["/app/backend/data"]
 WORKDIR /app/backend
+USER node
 EXPOSE 3000
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["node", "dist/main.js"]
