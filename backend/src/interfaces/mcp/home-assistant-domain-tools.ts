@@ -280,16 +280,19 @@ function buildServiceData(
   def: ServiceToolDef,
   input: Record<string, unknown>,
 ): Record<string, unknown> {
-  const serviceData: Record<string, unknown> = {
-    entity_id: input.entityId,
-  };
-  for (const param of def.params) {
-    const value = input[param.argName];
-    if (value !== undefined) {
-      serviceData[param.key ?? param.argName] = value;
-    }
-  }
-  return serviceData;
+  // Only own properties of the tool input are read, and the payload is built
+  // with Object.fromEntries (define, not assign), so input can never reach
+  // inherited/prototype properties on either side.
+  const paramEntries = def.params
+    .filter((param) =>
+      Object.prototype.hasOwnProperty.call(input, param.argName),
+    )
+    .map((param): [string, unknown] => [
+      param.key ?? param.argName,
+      input[param.argName],
+    ])
+    .filter(([, value]) => value !== undefined);
+  return { entity_id: input.entityId, ...Object.fromEntries(paramEntries) };
 }
 
 /** Registers one tool per ServiceToolDef, scoped to one authenticated user. */
