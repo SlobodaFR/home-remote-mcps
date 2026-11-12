@@ -14,7 +14,7 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
-    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.1.0",
     "@modelcontextprotocol/server": "^2.3.0",
     "@nestjs/common": "^10.4.0",
     "@nestjs/config": "^3.3.0",
