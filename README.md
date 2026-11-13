@@ -59,8 +59,10 @@ cd garmin-connector && pip install -r requirements.txt && uvicorn app.main:app -
 ```bash
 npm run build        # frontend, then backend (bundles frontend/dist into the backend build)
 npm run test          # backend (vitest) then frontend (vitest)
-npm run lint           # eslint on both workspaces
-npm run format          # prettier --write, repo-wide
+npm run lint           # oxlint (type-aware)
+npm run format          # oxfmt --write, repo-wide
+npm run format:check
+npm run typecheck
 ```
 
 Husky hooks (`pre-commit`, `pre-push`, `commit-msg`) run lint-staged and commitlint
