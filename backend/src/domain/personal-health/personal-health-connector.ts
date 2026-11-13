@@ -4,7 +4,8 @@ export interface PersonalHealthCredentials {
 }
 
 export type PersonalHealthTestResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Port (driven side) for the health.sloboda.fr companion service (Apple

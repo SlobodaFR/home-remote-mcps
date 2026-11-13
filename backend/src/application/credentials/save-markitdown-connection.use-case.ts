@@ -8,7 +8,8 @@ import { CredentialCrypto } from '../../domain/shared/credential-crypto';
 export const MARKITDOWN_SERVICE = 'markitdown';
 
 export type SaveMarkitdownConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * There is nothing for the user to enter - MarkItDown is a stateless

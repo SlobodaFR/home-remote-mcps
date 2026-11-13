@@ -10,12 +10,15 @@ import { Request, Response } from 'express';
 import { AccessTokenVerifier } from '../../../domain/auth/access-token-verifier';
 import { OAuthClient } from '../../../domain/auth/oauth-client';
 import { RevokedSessionRepository } from '../../../domain/auth/revoked-session.repository';
-import { setAuthCookies } from '../auth-cookies';
+import {
+  ACCESS_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_NAME,
+  setAuthCookies,
+} from '../auth-cookies';
 import { CurrentUserPayload } from '../decorators/current-user.decorator';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
-export const ACCESS_TOKEN_COOKIE_NAME = 'access_token';
-export const REFRESH_TOKEN_COOKIE_NAME = 'refresh_token';
+export { ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME };
 
 export interface AuthenticatedRequest extends Request {
   cookies: Record<string, string | undefined>;

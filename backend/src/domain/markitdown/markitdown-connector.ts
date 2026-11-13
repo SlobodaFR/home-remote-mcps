@@ -3,7 +3,8 @@ export interface MarkitdownConvertResult {
 }
 
 export type MarkitdownTestResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Port (driven side) implemented by the infrastructure layer. Talks to the

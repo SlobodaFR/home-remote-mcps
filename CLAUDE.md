@@ -55,8 +55,11 @@ npm run test:backend -- --watch
 npx vitest run <name-or-path-fragment> --root backend   # single test
 
 # Lint / format
-npm run lint                 # eslint on both workspaces
-npm run format                # prettier --write . (repo-wide)
+npm run lint                 # oxlint --type-aware (both workspaces)
+npm run lint:fix
+npm run format                # oxfmt --write . (repo-wide)
+npm run format:check
+npm run typecheck            # tsc --noEmit (backend) + tsc -b --noEmit (frontend)
 ```
 
 garmin-connector / cookidoo-connector / markitdown-connector (Python, FastAPI + uvicorn, separate
@@ -113,7 +116,7 @@ Each MCP integration follows the same shape (see `garmin-mcp.module.ts` /
    `ResolveUserFromApiKeyUseCase`.
 3. Controller builds a fresh `McpServer` + `NodeStreamableHTTPServerTransport` per request
    (stateless — `sessionIdGenerator: undefined`), calls `register<Service>Tools(server, gateway,
-  userId)`, then `transport.handleRequest(req, res, req.body)`.
+     userId)`, then `transport.handleRequest(req, res, req.body)`.
 4. The `*DataGateway` (application layer) loads the user's encrypted credential, decrypts it,
    calls the domain connector port, and — if the connector returned refreshed tokens — re-encrypts
    and persists them before returning.
@@ -244,9 +247,10 @@ is the one fetch wrapper. Built and served as static files by the NestJS backend
 
 ## Conventions
 
-- Backend/frontend both lint via ESLint flat config + `typescript-eslint` strict, formatted with
-  Prettier; `lint-staged` + Husky (`pre-commit`, `pre-push`, `commit-msg`) enforce both plus
-  Conventional Commits (`commitlint.config.js`) on every commit.
+- Backend/frontend both lint via Oxlint (type-aware, `.oxlintrc.json`) and are formatted with
+  Oxfmt (`.oxfmtrc.json`); `lint-staged` + Husky (`pre-commit` oxfmt, `pre-push` lint + tests,
+  `commit-msg`) enforce them plus Conventional Commits (`commitlint.config.js`, `style` allowed
+  for reformat-only commits).
 - Domain ports are TypeScript `abstract class`es (not `interface`s) so they can be used as NestJS
   DI tokens directly (`{ provide: GarminConnector, useClass: HttpGarminConnector }`).
 - Comments in this codebase are used specifically to explain _why_ a non-obvious constraint exists

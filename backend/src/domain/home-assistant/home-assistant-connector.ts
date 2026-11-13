@@ -6,7 +6,8 @@ export interface HomeAssistantCredentials {
 }
 
 export type HomeAssistantTestResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export type HomeAssistantHttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 

@@ -8,7 +8,8 @@ import {
 import { YOUTUBE_SERVICE } from './start-youtube-connection.use-case';
 
 export type CompleteYoutubeConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Second step of the YouTube OAuth dance: Google redirects the browser here

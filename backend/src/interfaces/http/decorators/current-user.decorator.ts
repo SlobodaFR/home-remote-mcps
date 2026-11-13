@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { AuthenticatedRequest } from '../guards/jwt-auth.guard';
+import { Request } from 'express';
 
 export interface CurrentUserPayload {
   id: string;
@@ -9,7 +9,9 @@ export interface CurrentUserPayload {
 
 export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): CurrentUserPayload => {
-    const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
+    const request = ctx
+      .switchToHttp()
+      .getRequest<Request & { user?: CurrentUserPayload }>();
     if (!request.user) {
       throw new Error(
         '@CurrentUser() used on a route not protected by JwtAuthGuard',

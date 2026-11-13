@@ -29,7 +29,7 @@ Generic-first, not generated: HA's REST API is small and uniform (unlike Garmin)
 
 - `home-assistant-tools.ts` — a handful of generic tools (`ha_list_entities`, `ha_get_states`,
   `ha_get_history`, `ha_call_service`, ...) plus `ha_request` (raw `{method, path, jsonBody,
-queryParams}` passthrough, mirrors `garmin_connectapi`).
+  queryParams}` passthrough, mirrors `garmin_connectapi`).
 - `home-assistant-domain-tools.ts` — thin, hand-written convenience wrappers for the common
   domains (lights, switches, climate, covers, media players) that just call `ha_call_service`
   under the hood with the right `domain`/`service`.

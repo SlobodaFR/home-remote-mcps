@@ -13,7 +13,8 @@ export interface CookidooCredentialPayload {
 }
 
 export type SaveCookidooConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Attempts a live Cookidoo login with the credentials the user just typed

@@ -8,7 +8,8 @@ import { CredentialCrypto } from '../../domain/shared/credential-crypto';
 export const HOME_ASSISTANT_SERVICE = 'home_assistant';
 
 export type SaveHomeAssistantConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Tests the base URL + long-lived token the user just typed in the form

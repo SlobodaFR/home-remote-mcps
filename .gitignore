@@ -23,3 +23,4 @@ cookidoo-connector/.venv
 cookidoo-connector/__pycache__
 cookidoo-connector/**/__pycache__
 cookidoo-connector/*.egg-info
+*.tsbuildinfo

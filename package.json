@@ -16,9 +16,12 @@
     "test:backend": "npm run test --workspace=backend",
     "test:frontend": "npm run test --workspace=frontend",
     "test": "npm run test:backend && npm run test:frontend",
-    "lint": "npm run lint --workspace=backend && npm run lint --workspace=frontend",
-    "format": "prettier --write .",
-    "prepare": "husky"
+    "lint": "oxlint --type-aware",
+    "format": "oxfmt --write .",
+    "prepare": "husky",
+    "typecheck": "npm run typecheck --workspace=backend && npx tsc -b --noEmit frontend",
+    "format:check": "oxfmt --check .",
+    "lint:fix": "oxlint --type-aware --fix"
   },
   "engines": {
     "node": ">=26"
@@ -27,16 +30,8 @@
     "typescript": "^5.9.3"
   },
   "lint-staged": {
-    "backend/src/**/*.ts": [
-      "eslint --fix --config backend/eslint.config.mjs",
-      "prettier --write"
-    ],
-    "frontend/src/**/*.{ts,tsx}": [
-      "eslint --fix --config frontend/eslint.config.mjs",
-      "prettier --write"
-    ],
-    "*.{json,md,yml,yaml}": [
-      "prettier --write"
+    "*.{ts,tsx,js,mjs,json,md,yml,yaml,css,html}": [
+      "oxfmt --no-error-on-unmatched-pattern"
     ]
   },
   "devDependencies": {
@@ -44,7 +39,9 @@
     "@commitlint/config-conventional": "^20.5.3",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "prettier": "^3.8.4"
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "oxlint-tsgolint": "^7.0.2007"
   },
   "allowScripts": {
     "better-sqlite3": true,
@@ -52,7 +49,6 @@
     "@nestjs/core": false,
     "@scarf/scarf": false,
     "fsevents": false,
-    "unrs-resolver": false,
     "@swc/core": true
   }
 }

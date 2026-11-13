@@ -32,7 +32,8 @@ export function normalizeInstagramAccountName(accountName: string): string {
 }
 
 export type SaveInstagramConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Resolves the Facebook Page + linked Instagram professional account for the

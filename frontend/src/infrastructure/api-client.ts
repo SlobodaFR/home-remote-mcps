@@ -59,10 +59,12 @@ export type GarminLoginResponse =
   | { status: 'error'; message: string };
 
 export type HomeAssistantConnectionResponse =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export type CookidooConnectionResponse =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export interface CookidooLocalization {
   countryCode: string;
@@ -71,19 +73,24 @@ export interface CookidooLocalization {
 }
 
 export type LogsConnectionResponse =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export type MarkitdownConnectionResponse =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export type PersonalHealthConnectionResponse =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export type InstagramConnectionResponse =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export type OpenAiConnectionResponse =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export interface StartYoutubeConnectionResponse {
   pendingId: string;

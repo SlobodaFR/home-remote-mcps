@@ -8,7 +8,8 @@ import { CredentialCrypto } from '../../domain/shared/credential-crypto';
 export const LOGS_SERVICE = 'logs';
 
 export type SaveLogsConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Tests the MinIO base path the user just typed in the form against the
