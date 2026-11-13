@@ -33,7 +33,7 @@ material. Human-oriented guides live in [`docs/`](./docs).
 
 ## Requirements
 
-- Node.js >= 20 (see `.nvmrc`)
+- Node.js >= 26 (see `.nvmrc`)
 - Python >= 3.11 for `garmin-connector`
 - A running `home-auth` instance (OAuth2 client registered for this app) for browser login
 - Docker, for production deploys (`deploy/docker-compose.yml`)
