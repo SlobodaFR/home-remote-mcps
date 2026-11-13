@@ -33,7 +33,8 @@ export function normalizeOpenAiConnectionName(connectionName: string): string {
 }
 
 export type SaveOpenAiConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Tests the OpenAI API key the user just typed in the form against the live

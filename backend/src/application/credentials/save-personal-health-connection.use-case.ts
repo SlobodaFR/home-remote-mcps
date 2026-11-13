@@ -8,7 +8,8 @@ import { CredentialCrypto } from '../../domain/shared/credential-crypto';
 export const PERSONAL_HEALTH_SERVICE = 'personal_health';
 
 export type SavePersonalHealthConnectionResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /**
  * Tests the health.sloboda.fr API key the user just typed in the form

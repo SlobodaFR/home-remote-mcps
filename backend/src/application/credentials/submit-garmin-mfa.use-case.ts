@@ -3,7 +3,8 @@ import { GarminConnector } from '../../domain/garmin/garmin-connector';
 import { StartGarminLoginUseCase } from './start-garmin-login.use-case';
 
 export type SubmitGarminMfaResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 /** Completes a Garmin login that was paused waiting for an MFA code. */
 @Injectable()

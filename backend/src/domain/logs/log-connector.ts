@@ -9,7 +9,8 @@ export interface LogsCredentials {
 }
 
 export type LogsTestResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export interface LogObjectSummary {
   key: string;

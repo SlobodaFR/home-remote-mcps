@@ -5,7 +5,8 @@ export interface OpenAiCredentials {
 }
 
 export type OpenAiTestResult =
-  { status: 'ok' } | { status: 'error'; message: string };
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
 
 export type OpenAiHttpMethod = 'GET' | 'POST' | 'DELETE';
 
