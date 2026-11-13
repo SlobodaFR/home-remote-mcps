@@ -49,10 +49,10 @@ npm run build:backend
 
 # Test
 npm run test                 # backend then frontend
-npm run test:backend         # jest, workspace=backend
+npm run test:backend         # vitest, workspace=backend
 npm run test:frontend        # vitest run, workspace=frontend
 npm run test:backend -- --watch
-npx jest <name-or-path-fragment> --workspace=backend   # single test, or: cd backend && npx jest <pattern>
+npx vitest run <name-or-path-fragment> --root backend   # single test
 
 # Lint / format
 npm run lint                 # eslint on both workspaces

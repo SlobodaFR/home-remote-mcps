@@ -58,7 +58,7 @@ cd garmin-connector && pip install -r requirements.txt && uvicorn app.main:app -
 
 ```bash
 npm run build        # frontend, then backend (bundles frontend/dist into the backend build)
-npm run test          # backend (jest) then frontend (vitest)
+npm run test          # backend (vitest) then frontend (vitest)
 npm run lint           # eslint on both workspaces
 npm run format          # prettier --write, repo-wide
 ```
