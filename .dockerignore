@@ -11,3 +11,4 @@ coverage
 garmin-connector
 garmin-connector/.venv
 **/__pycache__
+**/*.tsbuildinfo

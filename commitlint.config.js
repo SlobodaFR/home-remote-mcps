@@ -4,7 +4,19 @@ module.exports = {
     'type-enum': [
       2,
       'always',
-      ['feat', 'fix', 'refactor', 'test', 'docs', 'chore', 'ci', 'build', 'perf'],
+      [
+        'feat',
+        'fix',
+        'refactor',
+        'test',
+        'docs',
+        'chore',
+        'ci',
+        'build',
+        'perf',
+        // Commits de reformatage seul (convention oxc : reformatage dans un commit séparé).
+        'style',
+      ],
     ],
   },
 };

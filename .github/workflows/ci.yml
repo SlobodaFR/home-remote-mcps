@@ -21,15 +21,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Lint backend
-        run: npm run lint --workspace=backend
+      - name: Lint
+        run: npm run lint
 
-      - name: Lint frontend
-        run: npm run lint --workspace=frontend
+      - name: Format check
+        run: npm run format:check
 
-      - name: Type-check frontend
-        run: npx tsc -b --noEmit
-        working-directory: frontend
+      - name: Type-check
+        run: npm run typecheck
 
       - name: Run tests
         run: npm test
