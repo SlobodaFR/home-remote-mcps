@@ -26,9 +26,6 @@
   "engines": {
     "node": ">=26"
   },
-  "overrides": {
-    "typescript": "^5.9.3"
-  },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,json,md,yml,yaml,css,html}": [
       "oxfmt --no-error-on-unmatched-pattern"
