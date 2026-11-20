@@ -39,7 +39,7 @@ Run from repo root (npm workspaces cover `backend`/`frontend`; `garmin-connector
 
 ```bash
 # Dev servers
-npm run dev:backend          # nest start --watch (backend/)
+npm run dev:backend          # tsc -w + node --watch (backend/)
 npm run dev:frontend         # vite (frontend/)
 
 # Build
