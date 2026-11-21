@@ -10,6 +10,7 @@ const COMMON = {
 };
 
 // Admin SPA (React, built by Vite): own scripts and styles, Google Fonts (index.html), fetch to /api.
+// Applied to all responses (see applySecurityHeaders).
 const forAdminUi = helmet({
   ...COMMON,
   contentSecurityPolicy: {
@@ -29,18 +30,18 @@ const forAdminUi = helmet({
   },
 });
 
-// JSON API and MCP endpoints (called by Claude servers, not browsers): no document, so no CSP.
-// Swagger UI (/docs, only when enabled) needs inline scripts and gets the same treatment.
-const withoutCsp = helmet({ ...COMMON, contentSecurityPolicy: false });
+// Swagger UI (/docs, outside production only) needs inline scripts.
+const forSwagger = helmet({ ...COMMON, contentSecurityPolicy: false });
 
 /**
- * Security headers for every response. Must be the first middleware. The CSP applies to every
- * document the service can serve, i.e. the admin SPA and its fallback. It is skipped only where the
- * service does not produce documents:
- * - `/api/*`: JSON and MCP. This relies on the SPA fallback excluding /api (SPA_EXCLUDED_ROUTES),
- *   otherwise an unknown /api URL would return the SPA shell without CSP.
- * - `/docs*`, only when Swagger is actually mounted (`docsEnabled`): in production those URLs fall
- *   through to the SPA fallback and must carry the CSP like any other SPA URL.
+ * Security headers for every response. Must be the first middleware.
+ *
+ * The strict CSP is sent on EVERY response, including `/api/*` where it is inert for non-browser
+ * clients (MCP, JSON): deciding by request path which responses are "not documents" always
+ * disagrees with some handler's own path normalization (express.static decodes `/api/..%2findex.html`
+ * to the SPA shell), which would serve the admin SPA without CSP. The only exemption is Swagger,
+ * and only when it is actually mounted (`docsEnabled`): in production `/docs*` is just the SPA
+ * fallback and keeps the CSP.
  */
 export function applySecurityHeaders(
   app: NestExpressApplication,
@@ -49,12 +50,11 @@ export function applySecurityHeaders(
   app.use((req: Request, res: Response, next: NextFunction) => {
     // Express routing is case-insensitive: match the same way.
     const path = req.path.toLowerCase();
-    const isApi = path === '/api' || path.startsWith('/api/');
-    const isDocs =
+    const isSwagger =
       options.docsEnabled &&
       (path === '/docs' ||
         path.startsWith('/docs/') ||
         path.startsWith('/docs-'));
-    (isApi || isDocs ? withoutCsp : forAdminUi)(req, res, next);
+    (isSwagger ? forSwagger : forAdminUi)(req, res, next);
   });
 }
