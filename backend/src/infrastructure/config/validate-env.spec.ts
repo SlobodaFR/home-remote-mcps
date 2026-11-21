@@ -1,4 +1,4 @@
-import { validateEnv } from './validate-env';
+import { DEV_PSEUDONYM_SECRET, validateEnv } from './validate-env';
 
 const validEnv = (): Record<string, unknown> => ({
   NODE_ENV: 'production',
@@ -19,6 +19,7 @@ const validEnv = (): Record<string, unknown> => ({
   MINIO_BUCKET: 'bucket',
   MINIO_ACCESS_KEY_ID: 'key-id',
   MINIO_SECRET_ACCESS_KEY: 'secret-key',
+  PSEUDONYM_SECRET: 'p'.repeat(48),
 });
 
 const REQUIRED = [
@@ -60,13 +61,44 @@ describe('validateEnv', () => {
   it('accepts a development environment pointing at http://localhost', () => {
     const env = {
       ...validEnv(),
+      PSEUDONYM_SECRET: undefined,
       NODE_ENV: 'development',
       AUTH_SERVICE_URL: 'http://localhost:3001',
       FRONTEND_URL: 'http://localhost:3000',
       PUBLIC_BASE_URL: 'http://localhost:3000',
     };
 
-    expect(validateEnv(env)).toEqual(env);
+    expect(validateEnv(env)).toEqual({
+      ...env,
+      PSEUDONYM_SECRET: DEV_PSEUDONYM_SECRET,
+    });
+  });
+
+  it('keeps a configured PSEUDONYM_SECRET outside production', () => {
+    const env = { ...validEnv(), NODE_ENV: 'development' };
+
+    expect(validateEnv(env).PSEUDONYM_SECRET).toBe('p'.repeat(48));
+  });
+
+  describe('PSEUDONYM_SECRET in production', () => {
+    it.each([
+      ['missing', undefined],
+      ['empty', ''],
+      ['too short', 'p'.repeat(31)],
+      ['the development default', DEV_PSEUDONYM_SECRET],
+    ])('refuses it when %s', (_name, value) => {
+      const env = { ...validEnv(), PSEUDONYM_SECRET: value };
+
+      expect(messageOf(env)).toContain(
+        'PSEUDONYM_SECRET must be set in production',
+      );
+    });
+
+    it('never echoes the weak value', () => {
+      expect(
+        messageOf({ ...validEnv(), PSEUDONYM_SECRET: 'short-secret' }),
+      ).not.toContain('short-secret');
+    });
   });
 
   it.each(REQUIRED)('refuses to start without %s', (variable) => {

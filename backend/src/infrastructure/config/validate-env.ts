@@ -1,3 +1,9 @@
+/** Used outside production only, so local runs and tests need no setup. Rejected in production. */
+export const DEV_PSEUDONYM_SECRET =
+  'dev-only-pseudonym-secret-not-for-production';
+
+const MIN_SECRET_BYTES = 32;
+
 /**
  * Read with `config.getOrThrow` by the code (in constructors at startup, or per request for
  * FRONTEND_URL, PUBLIC_BASE_URL and AUTH_WEBHOOK_SECRET): a missing one crashes Nest or answers 500
@@ -54,6 +60,8 @@ export function validateEnv(
 ): Record<string, unknown> {
   const production = env.NODE_ENV === 'production';
   const problems: string[] = [];
+  const pseudonymSecret =
+    typeof env.PSEUDONYM_SECRET === 'string' ? env.PSEUDONYM_SECRET : '';
 
   const present = (variable: string): string | null => {
     const value = env[variable];
@@ -111,10 +119,23 @@ export function validateEnv(
     problems.push('TRUST_PROXY_HOPS must be a single digit (0 to 9)');
   }
 
+  // HMAC key of the log pseudonyms (pseudonymize()): a guessable one would make them reversible.
+  if (
+    production &&
+    (Buffer.byteLength(pseudonymSecret, 'utf8') < MIN_SECRET_BYTES ||
+      pseudonymSecret === DEV_PSEUDONYM_SECRET)
+  ) {
+    problems.push(
+      `PSEUDONYM_SECRET must be set in production to a random value of at least ${MIN_SECRET_BYTES.toString()} bytes (openssl rand -base64 48)`,
+    );
+  }
+
   if (problems.length > 0) {
     throw new Error(
       `Invalid environment configuration:\n- ${problems.join('\n- ')}`,
     );
   }
-  return env;
+  return production
+    ? env
+    : { ...env, PSEUDONYM_SECRET: pseudonymSecret || DEV_PSEUDONYM_SECRET };
 }

@@ -5,6 +5,7 @@ import {
   MarkitdownConvertResult,
   MarkitdownTestResult,
 } from '../../domain/markitdown/markitdown-connector';
+import { upstreamErrorMessage } from '../shared/upstream-error';
 
 interface SidecarErrorBody {
   detail?: string;
@@ -73,8 +74,10 @@ export class HttpMarkitdownConnector extends MarkitdownConnector {
         .json()
         .catch(() => ({}))) as SidecarErrorBody;
       throw new Error(
-        errorBody.detail ??
+        upstreamErrorMessage(
+          errorBody.detail,
           `markitdown-connector request failed: ${response.status.toString()}`,
+        ),
       );
     }
     return (await response.json()) as T;

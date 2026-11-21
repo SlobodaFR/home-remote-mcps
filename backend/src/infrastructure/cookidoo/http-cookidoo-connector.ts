@@ -6,6 +6,7 @@ import {
   CookidooLocalization,
   CookidooLoginResult,
 } from '../../domain/cookidoo/cookidoo-connector';
+import { upstreamErrorMessage } from '../shared/upstream-error';
 
 interface SidecarErrorBody {
   detail?: string;
@@ -102,8 +103,10 @@ export class HttpCookidooConnector extends CookidooConnector {
         .json()
         .catch(() => ({}))) as SidecarErrorBody;
       throw new Error(
-        errorBody.detail ??
+        upstreamErrorMessage(
+          errorBody.detail,
           `cookidoo-connector request failed: ${response.status.toString()}`,
+        ),
       );
     }
     return (await response.json()) as T;

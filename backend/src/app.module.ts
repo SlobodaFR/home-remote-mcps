@@ -1,10 +1,12 @@
 import { join } from 'path';
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
 import { validateEnv } from './infrastructure/config/validate-env';
+import { loggerParams } from './infrastructure/logging/logger.config';
 import { DatabaseModule } from './infrastructure/persistence/database.module';
 import { SharedInfrastructureModule } from './infrastructure/shared.module';
 import { ApiKeysModule } from './interfaces/http/modules/api-keys.module';
@@ -25,6 +27,14 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        loggerParams(
+          config.get<string>('NODE_ENV'),
+          config.getOrThrow<string>('PSEUDONYM_SECRET'),
+        ),
+    }),
     ThrottlerModule.forRoot(throttlerOptions),
     DatabaseModule,
     SharedInfrastructureModule,

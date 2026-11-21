@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import { LoggerErrorInterceptor } from 'nestjs-pino';
 import { trustedOriginsFrom } from './guards/same-origin.guard';
 import { applySecurityHeaders } from './security-headers';
 import { createSameOriginMiddleware } from './same-origin.middleware';
@@ -35,5 +36,7 @@ export function configureApp(
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(cookieParser());
+  // Puts the real exception on the request completion log line (through the whitelist serializer).
+  app.useGlobalInterceptors(new LoggerErrorInterceptor());
   setupSwagger(app, env.NODE_ENV);
 }
