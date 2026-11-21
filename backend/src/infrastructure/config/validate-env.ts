@@ -102,6 +102,15 @@ export function validateEnv(
     }
   }
 
+  const trustProxyHops = env.TRUST_PROXY_HOPS;
+  if (
+    trustProxyHops !== undefined &&
+    trustProxyHops !== '' &&
+    !(typeof trustProxyHops === 'string' && /^[0-9]$/.test(trustProxyHops))
+  ) {
+    problems.push('TRUST_PROXY_HOPS must be a single digit (0 to 9)');
+  }
+
   if (problems.length > 0) {
     throw new Error(
       `Invalid environment configuration:\n- ${problems.join('\n- ')}`,
