@@ -5,6 +5,7 @@ import {
   InstagramHttpMethod,
   InstagramTestResult,
 } from '../../domain/instagram/instagram-connector';
+import { upstreamErrorMessage } from '../shared/upstream-error';
 
 const DEFAULT_BASE_URL = 'https://graph.facebook.com';
 const DEFAULT_API_VERSION = 'v21.0';
@@ -102,8 +103,10 @@ export class HttpInstagramConnector extends InstagramConnector {
 
     if (!response.ok || body.error) {
       throw new Error(
-        body.error?.message ??
+        upstreamErrorMessage(
+          body.error?.message,
           `Instagram Graph API request failed: ${response.status.toString()}`,
+        ),
       );
     }
 

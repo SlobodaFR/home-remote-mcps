@@ -6,6 +6,7 @@ import {
   OpenAiHttpMethod,
   OpenAiTestResult,
 } from '../../domain/openai/openai-connector';
+import { upstreamErrorMessage } from '../shared/upstream-error';
 
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 
@@ -76,8 +77,10 @@ export class HttpOpenAiConnector extends OpenAiConnector {
 
     if (!response.ok) {
       throw new Error(
-        body.error?.message ??
+        upstreamErrorMessage(
+          body.error?.message,
           `OpenAI request failed: ${response.status.toString()}`,
+        ),
       );
     }
 

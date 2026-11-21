@@ -5,6 +5,7 @@ import {
   YoutubeDataResult,
   YoutubeTokenExchangeResult,
 } from '../../domain/youtube/youtube-connector';
+import { upstreamErrorMessage } from '../shared/upstream-error';
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -97,10 +98,10 @@ export class HttpYoutubeConnector extends YoutubeConnector {
     if (!response.ok || !body.access_token) {
       return {
         status: 'error',
-        message:
-          body.error_description ??
-          body.error ??
+        message: upstreamErrorMessage(
+          body.error_description ?? body.error,
           `Google token request failed: ${response.status.toString()}`,
+        ),
       };
     }
     if (!body.refresh_token && params.grant_type === 'authorization_code') {
@@ -626,8 +627,10 @@ export class HttpYoutubeConnector extends YoutubeConnector {
         .json()
         .catch(() => ({}))) as GoogleErrorBody;
       throw new Error(
-        errorBody.error?.message ??
+        upstreamErrorMessage(
+          errorBody.error?.message,
           `YouTube API request failed: ${response.status.toString()}`,
+        ),
       );
     }
     if (response.status === 204) {
