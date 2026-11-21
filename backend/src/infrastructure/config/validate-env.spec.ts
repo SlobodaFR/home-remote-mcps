@@ -128,7 +128,32 @@ describe('validateEnv', () => {
 
   // Sidecars and MinIO live on the internal docker network, in plain http.
   it('does not require https for internal services in production', () => {
-    expect(() => validateEnv(validEnv())).not.toThrow();
+    expect(() =>
+      validateEnv({
+        ...validEnv(),
+        MINIO_ENDPOINT: 'http://minio:9000',
+        GARMIN_CONNECTOR_URL: 'http://garmin-connector:8000',
+      }),
+    ).not.toThrow();
+  });
+
+  // `new URL('minio:9000')` parses fine but the MinIO client cannot use it.
+  it.each(['minio:9000', 'ftp://minio.internal', 'localhost:3000'])(
+    'refuses a scheme-less or non-http URL: %s',
+    (value) => {
+      expect(messageOf({ ...validEnv(), MINIO_ENDPOINT: value })).toContain(
+        'MINIO_ENDPOINT must be an http(s) URL',
+      );
+    },
+  );
+
+  it('does not require NODE_ENV', () => {
+    const env = validEnv();
+    delete env.NODE_ENV;
+
+    expect(() =>
+      validateEnv({ ...env, FRONTEND_URL: 'http://localhost:3000' }),
+    ).not.toThrow();
   });
 
   it('never leaks a secret value in the error message', () => {
@@ -139,12 +164,7 @@ describe('validateEnv', () => {
     }
   });
 
-  it('keeps optional variables optional', () => {
-    const env = validEnv();
-
-    expect(() => validateEnv(env)).not.toThrow();
-    expect(env.PORT).toBeUndefined();
-    expect(env.DATABASE_PATH).toBeUndefined();
-    expect(env.MINIO_REGION).toBeUndefined();
+  it('keeps PORT, DATABASE_PATH and MINIO_REGION optional', () => {
+    expect(() => validateEnv(validEnv())).not.toThrow();
   });
 });
