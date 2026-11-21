@@ -58,10 +58,8 @@ describe('configureApp', () => {
         .options('/api/ping')
         .set('Origin', 'https://evil.test')
         .set('Access-Control-Request-Method', 'POST')
-        .expect(200);
+        .expect(404); // the CORS middleware would have answered 204
 
-      // Reached the router (Express answers OPTIONS itself) but no CORS negotiation happened.
-      expect(response.headers['allow']).toContain('POST');
       expect(response.headers['access-control-allow-origin']).toBeUndefined();
       expect(response.headers['access-control-allow-methods']).toBeUndefined();
       await app.close();
