@@ -8,12 +8,18 @@ export const THROTTLE_ERROR_MESSAGE =
 export const API_LIMIT_PER_MINUTE = 100;
 /**
  * MCP endpoints (`/api/mcp/...`): called by Claude's servers, so every request of every user of
- * the connector comes from the same few egress IPs, and one conversation can chain dozens of tool
- * calls. The limit is only a safety net against runaway loops and API-key guessing, never a
- * budget a legitimate client should reach. It counts requests when they start, so a long-lived
- * streaming response (SSE / streamable HTTP) is never cut by it.
+ * the connector comes from the same few egress IPs. The transport is stateless Streamable HTTP:
+ * about 3 POSTs per tool call (initialize, tools/list, tools/call), so 300/min is an order of
+ * magnitude above a conversation chaining dozens of calls, and a legitimate client never reaches it.
+ *
+ * What it does NOT make cheap: the budget is per route (each of the 9 MCP controllers has its own
+ * counter) and a request is counted when it starts, so a long-lived streaming response is never
+ * cut. API keys are 32 random bytes, so guessing one is not the threat; the cost of an
+ * unauthenticated request is: ApiKeyGuard derives a scrypt hash per stored key before deciding.
+ * That makes the limit a ceiling on how much of the event loop one IP can burn, not a protection
+ * by itself (see the report: indexing keys by a fast hash is the real fix).
  */
-export const MCP_LIMIT_PER_MINUTE = 1200;
+export const MCP_LIMIT_PER_MINUTE = 300;
 
 interface PathRequest {
   path: string;
