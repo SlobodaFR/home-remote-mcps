@@ -194,12 +194,13 @@ describe('logger configuration', () => {
     expect(level({}, { statusCode: 200 }, new Error('boom'))).toBe('error');
   });
 
-  it('skips automatic request logs for static assets only', () => {
+  it('skips automatic request logs for static assets and the health check only', () => {
     const { ignore } = pinoHttpOptions().autoLogging as {
       ignore: (req: { url?: string }) => boolean;
     };
 
     expect(ignore({ url: '/assets/index-abc.js' })).toBe(true);
+    expect(ignore({ url: '/healthz' })).toBe(true);
     expect(ignore({ url: '/api/auth/me' })).toBe(false);
   });
 
