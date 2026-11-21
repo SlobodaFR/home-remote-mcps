@@ -83,6 +83,9 @@ describe('logger configuration', () => {
         '/api/mcp/instagram/[redacted]/my-account',
       ],
       ['/API/MCP/openai/KEY123/work?x=1', '/API/MCP/openai/[redacted]/work'],
+      // Pasted without the /api prefix: not an MCP route, but the key is still in the URL.
+      ['/mcp/garmin/hrm_AbC-123_xyz', '/mcp/garmin/[redacted]'],
+      ['/wrong/hrm_AbC-123_xyz/extra', '/wrong/[redacted]/extra'],
       ['/api/credentials', '/api/credentials'],
       ['/api/auth/disconnect?secret=hook', '/api/auth/disconnect'],
     ])('keeps the API key out of the logged path: %s', (url, expected) => {
