@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Req, Res } from '@nestjs/common';
+import {
+  CanActivate,
+  Controller,
+  Get,
+  Module,
+  Post,
+  Req,
+  Res,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
@@ -95,6 +104,7 @@ describe('rate limit', () => {
     await app.close();
   });
 
+  // Documentation more than coverage: the guard runs before the handler and cannot touch res.write.
   it('does not cut a streaming MCP response, even at the edge of the budget', async () => {
     const app = await createApp({ api: 1, mcp: 5 });
     const server = app.getHttpServer();
@@ -116,8 +126,54 @@ describe('rate limit', () => {
     await app.close();
   });
 
-  it('has a production MCP budget that no legitimate client reaches, above the API one', () => {
-    expect(MCP_LIMIT_PER_MINUTE).toBeGreaterThan(API_LIMIT_PER_MINUTE * 5);
+  // Pins what the limit is keyed on: the forwarded client address, not the proxy's.
+  it('keeps a separate budget per forwarded client IP behind the proxy', async () => {
+    const app = await createApp({ api: 1, mcp: 50 }, { TRUST_PROXY_HOPS: '1' });
+    const server = app.getHttpServer();
+    const get = (ip: string) =>
+      request(server).get('/api/credentials').set('X-Forwarded-For', ip);
+
+    await get('203.0.113.1').expect(200);
+    await get('203.0.113.2').expect(200);
+    await get('203.0.113.2').expect(429);
+    // A spoofed leftmost entry does not buy a fresh budget: only the proxy-added hop counts.
+    await get('198.51.100.9, 203.0.113.2').expect(429);
+    await app.close();
+  });
+
+  // Counting must happen before the session guard: it is what bounds unauthenticated requests
+  // (each one with a bogus refresh cookie costs an outbound call to home-auth). Guard order is
+  // module-registration dependent, hence this test with the real shape (guard in another module).
+  it('counts requests before a session guard in another module rejects them', async () => {
+    class RejectingGuard implements CanActivate {
+      canActivate(): boolean {
+        throw new UnauthorizedException();
+      }
+    }
+    @Module({ providers: [{ provide: APP_GUARD, useClass: RejectingGuard }] })
+    class SessionModule {}
+    const moduleRef = await Test.createTestingModule({
+      imports: [
+        ThrottlerModule.forRoot(buildThrottlerOptions({ api: 2, mcp: 50 })),
+        SessionModule,
+      ],
+      controllers: [StubController],
+      providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+    }).compile();
+    const app = moduleRef.createNestApplication<NestExpressApplication>();
+    configureApp(app, {});
+    await app.init();
+    const server = app.getHttpServer();
+
+    await request(server).get('/api/credentials').expect(401);
+    await request(server).get('/api/credentials').expect(401);
+    await request(server).get('/api/credentials').expect(429);
+    await app.close();
+  });
+
+  it('has a production MCP budget well above one conversation and above the API one', () => {
+    expect(MCP_LIMIT_PER_MINUTE).toBe(300);
+    expect(MCP_LIMIT_PER_MINUTE).toBeGreaterThan(API_LIMIT_PER_MINUTE);
     expect(throttlerOptions).toMatchObject({ ipv6SubnetPrefix: 64 });
   });
 
