@@ -28,7 +28,7 @@ export const REDACT_PATHS = [
   '*.query',
 ];
 
-const QUIET_PATHS = [/^\/assets\//];
+const QUIET_PATHS = [/^\/assets\//, /^\/healthz\/?$/];
 
 /** `/api/mcp/<service>/<apiKey>/...`: the API key travels in the path (see ApiKeyGuard). */
 const MCP_KEY_SEGMENT = /^(\/api\/mcp\/[^/]+\/)[^/]+/i;

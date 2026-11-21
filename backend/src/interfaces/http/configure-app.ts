@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { LoggerErrorInterceptor } from 'nestjs-pino';
+import { HEALTH_ROUTE } from './health-route';
 import { trustedOriginsFrom } from './guards/same-origin.guard';
 import { applySecurityHeaders } from './security-headers';
 import { createSameOriginMiddleware } from './same-origin.middleware';
@@ -33,7 +34,8 @@ export function configureApp(
       trustedOriginsFrom([env.FRONTEND_URL, env.PUBLIC_BASE_URL]),
     ),
   );
-  app.setGlobalPrefix('api');
+  // /healthz is outside the /api prefix so that Caddy can block it with `respond /healthz* 404`.
+  app.setGlobalPrefix('api', { exclude: [HEALTH_ROUTE] });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(cookieParser());
   // Puts the real exception on the request completion log line (through the whitelist serializer).

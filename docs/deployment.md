@@ -59,7 +59,9 @@ across the restart as long as the volume is preserved.
 
 ## Health checks
 
-- `home-remote-mcps`: `GET /api/auth/me` answering `401` (no session cookie) confirms the backend is
-  up. Swagger (`/docs`) is not served in production.
+- `home-remote-mcps`: `GET /healthz` on the VPS (`curl http://127.0.0.1:3006/healthz`) returns
+  `{"status":"ok","runtime":{...event-loop lag, memory}}`. Caddy blocks it on the public domain
+  (`respond /healthz* 404`); `GET /api/auth/me` answering `401` also confirms the backend is up.
+  Swagger (`/docs`) is not served in production.
 - `garmin-connector`: `GET /health` returns `{"status": "ok"}` — reachable only from inside the
   compose network (e.g. `docker compose exec home-remote-mcps curl http://garmin-connector:8000/health`).
