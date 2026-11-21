@@ -17,6 +17,13 @@ export function configureApp(
 ): void {
   // First middleware: every response (API, MCP, SPA files) gets the security headers.
   applySecurityHeaders(app, { docsEnabled: isSwaggerEnabled(env.NODE_ENV) });
+  // Number of reverse-proxy hops to trust for X-Forwarded-For (req.ip feeds the rate limit).
+  // Production: 1 (Caddy, which replaces any client-sent X-Forwarded-For since no trusted_proxies
+  // is configured). Unset in local dev, otherwise any client could spoof its IP.
+  const trustProxyHops = Number(env.TRUST_PROXY_HOPS ?? 0);
+  if (trustProxyHops > 0) {
+    app.set('trust proxy', trustProxyHops);
+  }
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(cookieParser());

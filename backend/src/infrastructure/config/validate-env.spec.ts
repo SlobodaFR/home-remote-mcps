@@ -164,6 +164,21 @@ describe('validateEnv', () => {
     }
   });
 
+  it.each(['0', '1', '2', ''])('accepts TRUST_PROXY_HOPS=%j', (value) => {
+    expect(() =>
+      validateEnv({ ...validEnv(), TRUST_PROXY_HOPS: value }),
+    ).not.toThrow();
+  });
+
+  it.each(['-1', 'one', '1.5', '10', 'true'])(
+    'refuses TRUST_PROXY_HOPS=%j',
+    (value) => {
+      expect(messageOf({ ...validEnv(), TRUST_PROXY_HOPS: value })).toContain(
+        'TRUST_PROXY_HOPS must be a single digit',
+      );
+    },
+  );
+
   it('keeps PORT, DATABASE_PATH and MINIO_REGION optional', () => {
     expect(() => validateEnv(validEnv())).not.toThrow();
   });

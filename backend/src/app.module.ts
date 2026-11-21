@@ -1,7 +1,9 @@
 import { join } from 'path';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { validateEnv } from './infrastructure/config/validate-env';
 import { DatabaseModule } from './infrastructure/persistence/database.module';
 import { SharedInfrastructureModule } from './infrastructure/shared.module';
@@ -17,11 +19,13 @@ import { MarkitdownMcpModule } from './interfaces/mcp/markitdown-mcp.module';
 import { OpenAiMcpModule } from './interfaces/mcp/openai-mcp.module';
 import { PersonalHealthMcpModule } from './interfaces/mcp/personal-health-mcp.module';
 import { SPA_EXCLUDED_ROUTES } from './interfaces/http/spa';
+import { throttlerOptions } from './interfaces/http/throttling';
 import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    ThrottlerModule.forRoot(throttlerOptions),
     DatabaseModule,
     SharedInfrastructureModule,
     ServeStaticModule.forRoot({
@@ -43,5 +47,6 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
     PersonalHealthMcpModule,
     YoutubeMcpModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}
