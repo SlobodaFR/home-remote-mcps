@@ -109,24 +109,57 @@ describe('security headers in production', () => {
     },
   );
 
-  // The CSP is for the admin UI only: JSON API and MCP responses are not documents.
+  // Inert for JSON/MCP clients, and it removes any path-based way to get an unprotected document.
   it.each([
     ['get', '/api/credentials', 200],
     ['post', '/api/mcp/garmin/some-key', 201],
     ['get', '/API/credentials', 200], // Express routes case-insensitively
   ] as const)(
-    'keeps the other headers but no CSP on %s %s',
+    'sends the CSP and the other headers on %s %s too',
     async (method, path, status) => {
       const response = await request(app.getHttpServer())
         [method](path)
         .expect(status);
 
-      expect(response.headers['content-security-policy']).toBeUndefined();
+      expect(response.headers['content-security-policy']).toContain(
+        "default-src 'self'",
+      );
       expectCommonHeaders(response.headers);
     },
   );
 
-  // The no-CSP exemption of /api is only safe if nothing under /api can be the SPA shell.
+  // express.static decodes and normalizes the path on its own: these reach the real index.html.
+  it.each([
+    '/api/..%2findex.html',
+    '/api/..%2Findex.html',
+    '/api/%2e%2e/index.html',
+    '/api/x/..%2f..%2findex.html',
+    '/docs/..%2findex.html',
+    '//api/x',
+    '/%61pi/x',
+    '/api%2Fx',
+  ])('never serves an HTML document without CSP: GET %s', async (path) => {
+    const response = await request(app.getHttpServer()).get(path);
+
+    const isHtml = Boolean(
+      response.headers['content-type']?.includes('text/html'),
+    );
+
+    expect(
+      !isHtml || response.headers['content-security-policy'] !== undefined,
+    ).toBe(true);
+  });
+
+  it('actually reaches the SPA shell through the encoded traversal (the test above is not vacuous)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/..%2findex.html')
+      .expect(200);
+
+    expect(response.text).toContain('spa');
+    expect(response.headers['content-security-policy']).toBeDefined();
+  });
+
+  // Unknown API URLs must be a JSON error, not the SPA shell.
   it.each(['/api/unknown', '/api/unknown/deeper', '/API/unknown', '/api'])(
     'never answers the SPA shell for an unknown GET %s',
     async (path) => {
