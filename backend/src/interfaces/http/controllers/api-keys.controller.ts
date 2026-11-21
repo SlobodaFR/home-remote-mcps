@@ -6,6 +6,7 @@ import {
   HttpCode,
   Param,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CreateApiKeyUseCase } from '../../../application/api-keys/create-api-key.use-case';
@@ -15,10 +16,12 @@ import {
   CurrentUser,
   CurrentUserPayload,
 } from '../decorators/current-user.decorator';
+import { SameOriginGuard } from '../guards/same-origin.guard';
 import { CreateApiKeyDto } from '../dto/create-api-key.dto';
 import { ApiKeyDto, toApiKeyDto } from '../presenters/api-key.presenter';
 import { CreateApiKeyResponseDto } from '../presenters/create-api-key-response.dto';
 
+@UseGuards(SameOriginGuard)
 @Controller('api-keys')
 export class ApiKeysController {
   constructor(
