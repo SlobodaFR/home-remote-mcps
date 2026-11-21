@@ -5,6 +5,7 @@ import {
   HomeAssistantHttpMethod,
   HomeAssistantTestResult,
 } from '../../domain/home-assistant/home-assistant-connector';
+import { upstreamErrorMessage } from '../shared/upstream-error';
 
 interface HaErrorBody {
   message?: string;
@@ -60,8 +61,10 @@ export class HttpHomeAssistantConnector extends HomeAssistantConnector {
         .json()
         .catch(() => ({}))) as HaErrorBody;
       throw new Error(
-        errorBody.message ??
+        upstreamErrorMessage(
+          errorBody.message,
           `Home Assistant request failed: ${response.status.toString()}`,
+        ),
       );
     }
 

@@ -6,6 +6,7 @@ import {
   GarminDataResult,
   GarminLoginResult,
 } from '../../domain/garmin/garmin-connector';
+import { upstreamErrorMessage } from '../shared/upstream-error';
 
 interface SidecarErrorBody {
   detail?: string;
@@ -97,8 +98,10 @@ export class HttpGarminConnector extends GarminConnector {
         .json()
         .catch(() => ({}))) as SidecarErrorBody;
       throw new Error(
-        errorBody.detail ??
+        upstreamErrorMessage(
+          errorBody.detail,
           `garmin-connector request failed: ${response.status.toString()}`,
+        ),
       );
     }
     return (await response.json()) as T;
