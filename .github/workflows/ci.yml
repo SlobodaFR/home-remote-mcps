@@ -125,7 +125,7 @@ jobs:
           context: garmin-connector
           push: false
           cache-from: type=gha,scope=garmin-connector
-          cache-to: type=gha,mode=max,scope=garmin-connector
+          cache-to: type=gha,mode=max,scope=garmin-connector,ignore-error=true
 
       - name: Build cookidoo-connector image (no push)
         uses: docker/build-push-action@v6
@@ -133,7 +133,7 @@ jobs:
           context: cookidoo-connector
           push: false
           cache-from: type=gha,scope=cookidoo-connector
-          cache-to: type=gha,mode=max,scope=cookidoo-connector
+          cache-to: type=gha,mode=max,scope=cookidoo-connector,ignore-error=true
 
       - name: Build markitdown-connector image (no push)
         uses: docker/build-push-action@v6
@@ -141,4 +141,4 @@ jobs:
           context: markitdown-connector
           push: false
           cache-from: type=gha,scope=markitdown-connector
-          cache-to: type=gha,mode=max,scope=markitdown-connector
+          cache-to: type=gha,mode=max,scope=markitdown-connector,ignore-error=true
