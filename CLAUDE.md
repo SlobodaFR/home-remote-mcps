@@ -253,5 +253,9 @@ is the one fetch wrapper. Built and served as static files by the NestJS backend
   for reformat-only commits).
 - Domain ports are TypeScript `abstract class`es (not `interface`s) so they can be used as NestJS
   DI tokens directly (`{ provide: GarminConnector, useClass: HttpGarminConnector }`).
+- Error messages are log-visible: the HTTP exceptions the app throws are logged with their `message`
+  (nestjs-pino), so never interpolate an email, name, token or decrypted credential into one, and
+  pass upstream API error texts through `upstreamErrorMessage()` (`infrastructure/shared/`). Logs
+  identify users by `pseudonymize(userId, PSEUDONYM_SECRET)` only.
 - Comments in this codebase are used specifically to explain _why_ a non-obvious constraint exists
   (protocol limitation, upstream quirk, security boundary) — match that when adding code.

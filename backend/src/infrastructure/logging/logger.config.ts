@@ -33,10 +33,19 @@ const QUIET_PATHS = [/^\/assets\//];
 /** `/api/mcp/<service>/<apiKey>/...`: the API key travels in the path (see ApiKeyGuard). */
 const MCP_KEY_SEGMENT = /^(\/api\/mcp\/[^/]+\/)[^/]+/i;
 
+/**
+ * API keys have a fixed shape (`hrm_` + base64url, see CreateApiKeyUseCase). Matched anywhere in
+ * the path too: a user who pastes the connector URL without the /api prefix hits `/mcp/<svc>/hrm_...`
+ * (404 or the SPA fallback), and that request is logged as well.
+ */
+const API_KEY_ANYWHERE = /\bhrm_[A-Za-z0-9_-]+/g;
+
 /** Path without query string (OAuth `code`, webhook `secret`) and without the MCP API key. */
 export function safePath(url: string | undefined): string {
   const path = (url ?? '').split('?')[0];
-  return path.replace(MCP_KEY_SEGMENT, '$1[redacted]');
+  return path
+    .replace(MCP_KEY_SEGMENT, '$1[redacted]')
+    .replace(API_KEY_ANYWHERE, '[redacted]');
 }
 
 interface SerializedError {
