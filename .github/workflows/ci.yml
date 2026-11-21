@@ -117,7 +117,7 @@ jobs:
           context: .
           push: false
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=max,ignore-error=true
 
       - name: Build garmin-connector image (no push)
         uses: docker/build-push-action@v6
