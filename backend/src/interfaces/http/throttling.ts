@@ -12,12 +12,12 @@ export const API_LIMIT_PER_MINUTE = 100;
  * about 3 POSTs per tool call (initialize, tools/list, tools/call), so 300/min is an order of
  * magnitude above a conversation chaining dozens of calls, and a legitimate client never reaches it.
  *
- * What it does NOT make cheap: the budget is per route (each of the 9 MCP controllers has its own
+ * Limits of this safety net: the budget is per route (each of the 9 MCP controllers has its own
  * counter) and a request is counted when it starts, so a long-lived streaming response is never
  * cut. API keys are 32 random bytes, so guessing one is not the threat; the cost of an
  * unauthenticated request is: ApiKeyGuard derives a scrypt hash per stored key before deciding.
- * That makes the limit a ceiling on how much of the event loop one IP can burn, not a protection
- * by itself (see the report: indexing keys by a fast hash is the real fix).
+ * The limit only caps how much of the event loop one IP can burn; the real fix is to look keys up
+ * by a fast hash before the scrypt check (ResolveUserFromApiKeyUseCase).
  */
 export const MCP_LIMIT_PER_MINUTE = 300;
 
