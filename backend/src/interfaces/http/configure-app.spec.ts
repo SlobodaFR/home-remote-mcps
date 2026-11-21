@@ -57,8 +57,11 @@ describe('configureApp', () => {
       const response = await request(app.getHttpServer())
         .options('/api/ping')
         .set('Origin', 'https://evil.test')
-        .set('Access-Control-Request-Method', 'POST');
+        .set('Access-Control-Request-Method', 'POST')
+        .expect(200);
 
+      // Reached the router (Express answers OPTIONS itself) but no CORS negotiation happened.
+      expect(response.headers['allow']).toContain('POST');
       expect(response.headers['access-control-allow-origin']).toBeUndefined();
       expect(response.headers['access-control-allow-methods']).toBeUndefined();
       await app.close();
