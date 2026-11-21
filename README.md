@@ -46,7 +46,7 @@ npm install                    # installs backend + frontend workspaces
 cp backend/.env.example backend/.env          # fill in home-auth + secrets, see comments in the file
 cp garmin-connector/.env.example garmin-connector/.env
 
-npm run dev:backend            # http://localhost:3000 (API under /api, Swagger under /api/docs)
+npm run dev:backend            # http://localhost:3000 (API under /api, Swagger under /docs, development only)
 npm run dev:frontend           # http://localhost:5173, proxies API calls to the backend
 
 cd garmin-connector && pip install -r requirements.txt && uvicorn app.main:app --reload --port 8000
