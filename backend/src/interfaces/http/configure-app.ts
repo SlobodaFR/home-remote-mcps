@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import { applySecurityHeaders } from './security-headers';
 import { setupSwagger } from './swagger';
 
 /**
@@ -14,6 +15,8 @@ export function configureApp(
   app: NestExpressApplication,
   env: NodeJS.ProcessEnv,
 ): void {
+  // First middleware: every response (API, MCP, SPA files) gets the security headers.
+  applySecurityHeaders(app);
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(cookieParser());
