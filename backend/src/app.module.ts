@@ -11,6 +11,7 @@ import { DatabaseModule } from './infrastructure/persistence/database.module';
 import { SharedInfrastructureModule } from './infrastructure/shared.module';
 import { ApiKeysModule } from './interfaces/http/modules/api-keys.module';
 import { AuthModule } from './interfaces/http/modules/auth.module';
+import { HealthModule } from './interfaces/http/modules/health.module';
 import { CredentialsModule } from './interfaces/http/modules/credentials.module';
 import { CookidooMcpModule } from './interfaces/mcp/cookidoo-mcp.module';
 import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
@@ -41,12 +42,13 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, 'public'),
       // Everything server-side lives under the /api global prefix (set in
-      // configureApp), so the SPA fallback only needs to exclude that.
+      // configureApp) except /healthz: the SPA fallback must exclude both.
       exclude: SPA_EXCLUDED_ROUTES,
     }),
     AuthModule,
     CredentialsModule,
     ApiKeysModule,
+    HealthModule,
     CookidooMcpModule,
     GarminMcpModule,
     HomeAssistantMcpModule,
