@@ -45,6 +45,8 @@ describe('AesGcmCredentialCrypto', () => {
       .subarray(0, 4)
       .toString('base64');
 
-    expect(() => crypto.decrypt([iv, truncatedTag, data].join(':'))).toThrow();
+    expect(() => crypto.decrypt([iv, truncatedTag, data].join(':'))).toThrow(
+      'Invalid authentication tag length',
+    );
   });
 });
