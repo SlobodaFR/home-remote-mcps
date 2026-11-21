@@ -1,8 +1,8 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { setupSwagger } from './interfaces/http/swagger';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -14,16 +14,7 @@ async function bootstrap(): Promise<void> {
     credentials: true,
   });
 
-  const config = new DocumentBuilder()
-    .setTitle('Home Remote MCPs')
-    .setDescription(
-      'Gateway MCP distant personnel (auth via home-auth) - module Garmin Connect',
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  setupSwagger(app, process.env.NODE_ENV);
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
   await app.listen(port);
