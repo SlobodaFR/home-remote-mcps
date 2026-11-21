@@ -1,4 +1,8 @@
-/** Required by the code at startup (`config.getOrThrow` in constructors): a missing one crashes Nest anyway, just later and less clearly. */
+/**
+ * Read with `config.getOrThrow` by the code (in constructors at startup, or per request for
+ * FRONTEND_URL, PUBLIC_BASE_URL and AUTH_WEBHOOK_SECRET): a missing one crashes Nest or answers 500
+ * later and less clearly, so it is refused at startup.
+ */
 const REQUIRED = [
   'AUTH_SERVICE_URL',
   'AUTH_CLIENT_ID',
@@ -82,6 +86,11 @@ export function validateEnv(
       url = new URL(value);
     } catch {
       problems.push(`${variable} must be a valid URL`);
+      continue;
+    }
+    // `new URL('minio:9000')` parses (protocol `minio:`): only http(s) endpoints are usable.
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      problems.push(`${variable} must be an http(s) URL`);
       continue;
     }
     if (
