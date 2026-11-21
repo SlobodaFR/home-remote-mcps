@@ -30,23 +30,31 @@ const forAdminUi = helmet({
 });
 
 // JSON API and MCP endpoints (called by Claude servers, not browsers): no document, so no CSP.
-// Swagger UI (/docs, outside production only) needs inline scripts and gets the same treatment.
+// Swagger UI (/docs, only when enabled) needs inline scripts and gets the same treatment.
 const withoutCsp = helmet({ ...COMMON, contentSecurityPolicy: false });
 
 /**
- * Security headers for every response. Must be the first middleware. The CSP only applies to the
- * admin UI (everything outside the /api prefix, i.e. the SPA static files and its fallback).
+ * Security headers for every response. Must be the first middleware. The CSP applies to every
+ * document the service can serve, i.e. the admin SPA and its fallback. It is skipped only where the
+ * service does not produce documents:
+ * - `/api/*`: JSON and MCP. This relies on the SPA fallback excluding /api (SPA_EXCLUDED_ROUTES),
+ *   otherwise an unknown /api URL would return the SPA shell without CSP.
+ * - `/docs*`, only when Swagger is actually mounted (`docsEnabled`): in production those URLs fall
+ *   through to the SPA fallback and must carry the CSP like any other SPA URL.
  */
-export function applySecurityHeaders(app: NestExpressApplication): void {
+export function applySecurityHeaders(
+  app: NestExpressApplication,
+  options: { docsEnabled: boolean },
+): void {
   app.use((req: Request, res: Response, next: NextFunction) => {
     // Express routing is case-insensitive: match the same way.
     const path = req.path.toLowerCase();
-    const withoutDocument =
-      path === '/api' ||
-      path.startsWith('/api/') ||
-      path === '/docs' ||
-      path.startsWith('/docs/') ||
-      path.startsWith('/docs-');
-    (withoutDocument ? withoutCsp : forAdminUi)(req, res, next);
+    const isApi = path === '/api' || path.startsWith('/api/');
+    const isDocs =
+      options.docsEnabled &&
+      (path === '/docs' ||
+        path.startsWith('/docs/') ||
+        path.startsWith('/docs-'));
+    (isApi || isDocs ? withoutCsp : forAdminUi)(req, res, next);
   });
 }

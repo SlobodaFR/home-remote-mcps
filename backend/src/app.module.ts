@@ -15,6 +15,7 @@ import { LogsMcpModule } from './interfaces/mcp/logs-mcp.module';
 import { MarkitdownMcpModule } from './interfaces/mcp/markitdown-mcp.module';
 import { OpenAiMcpModule } from './interfaces/mcp/openai-mcp.module';
 import { PersonalHealthMcpModule } from './interfaces/mcp/personal-health-mcp.module';
+import { SPA_EXCLUDED_ROUTES } from './interfaces/http/spa';
 import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
 
 @Module({
@@ -25,8 +26,8 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, 'public'),
       // Everything server-side lives under the /api global prefix (set in
-      // main.ts), so the SPA fallback only needs to exclude that.
-      exclude: ['/api*'],
+      // configureApp), so the SPA fallback only needs to exclude that.
+      exclude: SPA_EXCLUDED_ROUTES,
     }),
     AuthModule,
     CredentialsModule,

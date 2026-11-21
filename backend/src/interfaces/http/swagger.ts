@@ -1,12 +1,16 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-/** API documentation on /docs, outside production only: it maps the whole attack surface. */
+/** API documentation is served outside production only: it maps the whole attack surface. */
+export function isSwaggerEnabled(nodeEnv: string | undefined): boolean {
+  return nodeEnv !== 'production';
+}
+
 export function setupSwagger(
   app: INestApplication,
   nodeEnv: string | undefined,
 ): void {
-  if (nodeEnv === 'production') {
+  if (!isSwaggerEnabled(nodeEnv)) {
     return;
   }
   const config = new DocumentBuilder()
