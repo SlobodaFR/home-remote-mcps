@@ -17,6 +17,8 @@ import { UserOrmEntity } from './entities/user.orm-entity';
           'DATABASE_PATH',
           'data/home-remote-mcps.sqlite',
         ),
+        // Do not enable TypeORM's `logging`: its console logger prints query parameters (emails,
+        // names, encrypted credentials) to stdout, bypassing the pino whitelist serializer.
         enableWAL: true,
         entities: [
           UserOrmEntity,
