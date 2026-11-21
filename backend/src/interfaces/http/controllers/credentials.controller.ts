@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
@@ -67,6 +68,7 @@ import { SaveInstagramConnectionDto } from '../dto/save-instagram-connection.dto
 import { SaveLogsConnectionDto } from '../dto/save-logs-connection.dto';
 import { SaveOpenAiConnectionDto } from '../dto/save-openai-connection.dto';
 import { SavePersonalHealthConnectionDto } from '../dto/save-personal-health-connection.dto';
+import { SameOriginGuard } from '../guards/same-origin.guard';
 import { StartGarminLoginDto } from '../dto/start-garmin-login.dto';
 import { StartYoutubeConnectionDto } from '../dto/start-youtube-connection.dto';
 import { SubmitGarminMfaDto } from '../dto/submit-garmin-mfa.dto';
@@ -75,6 +77,7 @@ import {
   toCredentialDto,
 } from '../presenters/credential.presenter';
 
+@UseGuards(SameOriginGuard)
 @Controller('credentials')
 export class CredentialsController {
   constructor(
