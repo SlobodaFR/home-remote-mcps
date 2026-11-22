@@ -119,6 +119,18 @@ export function validateEnv(
     problems.push('TRUST_PROXY_HOPS must be a single digit (0 to 9)');
   }
 
+  // Logout webhook signature key (contract PC7), optional: without it only the legacy `?secret=` exists.
+  const signingSecret = env.AUTH_WEBHOOK_SIGNING_SECRET;
+  if (
+    signingSecret !== undefined &&
+    signingSecret !== '' &&
+    !(typeof signingSecret === 'string' && /^[0-9a-f]{64}$/.test(signingSecret))
+  ) {
+    problems.push(
+      'AUTH_WEBHOOK_SIGNING_SECRET must be 64 lowercase hexadecimal characters, exactly as displayed by the home-auth admin',
+    );
+  }
+
   // HMAC key of the log pseudonyms (pseudonymize()): a guessable one would make them reversible.
   if (
     production &&

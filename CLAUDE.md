@@ -218,8 +218,12 @@ Two independent auth mechanisms coexist:
 - **Browser session**: OAuth2 against `home-auth` (external SSO) — `AuthController`
   (`/api/auth/login|callback|logout|me`), tokens set as cookies (`auth-cookies.ts`), verified by
   the global `JwtAuthGuard` (registered as `APP_GUARD` in `auth.module.ts`) via JWKS
-  (`JwksAccessTokenVerifier`). `home-auth` calls back `POST /api/auth/disconnect?secret=...` (a
-  shared-secret webhook, not JWT-guarded) on global logout to revoke sessions server-side.
+  (`JwksAccessTokenVerifier`). `home-auth` calls back `POST /api/auth/disconnect` (not JWT-guarded, `LogoutWebhookGuard`) on
+  global logout to revoke sessions server-side: HMAC `X-Auth-Webhook-*` signature or legacy
+  `?secret=` (see README). Any non-empty signature header with an id already seen (10 min) is
+  refused 401 even with a valid `?secret=`; other signature failures fall back to `?secret=`
+  (flag `auth-webhook-require-signature` off). `AUTH_WEBHOOK_SIGNING_SECRET`: unset/empty or 64
+  lowercase hex, validated at boot in every environment.
 - **MCP API keys**: per-user, per-request, checked by `ApiKeyGuard` on each `interfaces/mcp/*`
   controller — independent of the session cookie flow. Managed via `ApiKeysModule`
   (`interfaces/http/controllers/api-keys.controller.ts`).

@@ -2,7 +2,7 @@ import { Controller, Get, Post } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { configureApp } from './configure-app';
+import { configureApp, NEST_APPLICATION_OPTIONS } from './configure-app';
 
 @Controller('ping')
 class PingController {
@@ -28,6 +28,14 @@ async function createApp(
   await app.init();
   return app;
 }
+
+describe('NEST_APPLICATION_OPTIONS', () => {
+  // The logout webhook signature is computed over req.rawBody: without it every signed delivery
+  // would be refused (and the legacy ?secret= would silently remain the only way in).
+  it('keeps the raw body of JSON requests', () => {
+    expect(NEST_APPLICATION_OPTIONS.rawBody).toBe(true);
+  });
+});
 
 describe('configureApp', () => {
   describe('CORS', () => {

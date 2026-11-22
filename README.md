@@ -98,6 +98,40 @@ services home-* le recopient tel quel.
 - `OFREP_ENDPOINT`, `OFREP_HEADERS` et `OFREP_TIMEOUT_MS`, que le provider lirait sinon, sont ignorés
   et retirés de l'environnement au démarrage (warn).
 
+## Webhook de déconnexion signé (home-auth)
+
+`POST /api/auth/disconnect` (appelé par home-auth à la déconnexion globale, exempté du contrôle
+same-origin car sans cookie) accepte deux preuves pendant la transition :
+
+- **Signature** (contrat PC7, nécessite `AUTH_WEBHOOK_SIGNING_SECRET`, 64 hex minuscules, exactement comme affiché par l'admin home-auth) : en-têtes
+  `X-Auth-Webhook-Id` (uuid), `X-Auth-Webhook-Timestamp` (secondes unix) et
+  `X-Auth-Webhook-Signature: v1=<hex>[,v1=<hex>]`, `hex = HMAC-SHA256(secret, id + "." + timestamp +
+  "." + corps brut)`, la clé étant la chaîne du secret (UTF-8, non décodée). Vérifié sur les octets
+  exacts reçus (`rawBody: true` à la création de l'app) : `|now - timestamp| <= 120 s`, id non vu
+  dans les 10 dernières minutes (mémoire du processus, perdue au redémarrage), chaque entrée `v1=`
+  décodée en 32 octets puis `timingSafeEqual` ; une entrée au mauvais format invalide l'en-tête.
+  Deux entrées pendant le recouvrement de 24 h d'un secret régénéré.
+- **Ancien `?secret=`** (`AUTH_WEBHOOK_SECRET`), comparé en temps constant. Dès qu'un en-tête
+  `X-Auth-Webhook-*` est non vide et que l'id a déjà été vu (10 min), la livraison est refusée (401) **même avec un
+  `?secret=` valide** : ce contrôle passe en premier, avant tout autre. Une signature qui ne tient pas pour une autre
+  raison (format, fenêtre, hmac) ou qui ne peut pas être vérifiée (pas de secret de signature, corps brut indisponible)
+  retombe sur cette preuve ; chaque acceptation par `?secret=` est loguée en WARN avec la raison (`no-signature-headers`, `missing-signing-secret`, `raw-body-unavailable`, `format`, `window`, `hmac`, jamais de valeur), au plus une fois par 5 min par raison, et une acceptation par signature en INFO (même limite).
+
+Le flag `auth-webhook-require-signature` (home-features, défaut du code `false`) rend la signature
+obligatoire et refuse le `?secret=` ; sans `AUTH_WEBHOOK_SIGNING_SECRET`, il fait refuser toutes les
+livraisons (erreur loguée une fois). Pin d'urgence : `FEATURES_PIN_AUTH_WEBHOOK_REQUIRE_SIGNATURE=false`.
+
+**Vecteurs de test fixes** (recopiés de home-auth#83, `src/domain/auth/webhook-signature.spec.ts`) :
+
+|     | secret | id                                     | timestamp    | corps                 | HMAC (hex)                                                         |
+| --- | ------ | -------------------------------------- | ------------ | --------------------- | ------------------------------------------------------------------ |
+| 1   | `S1`   | `3b241101-e2bb-4255-8caf-4136c566a962` | `1700000000` | `{"userId":"u1"}`     | `41294c53497c1d18871786b2d5c3ec091e6b357638e7104d826de50af8813242` |
+| 2   | `S2`   | `3b241101-e2bb-4255-8caf-4136c566a962` | `1700000000` | `{"userId":"u1"}`     | `89de6c4652b33d864427b3091771ed8b9266a99b3bf915b126eb4655a2dce09f` |
+| 3   | `S1`   | `9b2f0f6e-8d3a-4f6b-9c1e-2a7d5e4c1b30` | `1700000123` | `{"userId":"4b8f-é"}` | `d9a2c8cec34058ebb100f8b454ba46b1214cf777000d9aab00dda91205d5a3ac` |
+
+- `S1` = `000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f`
+- `S2` = `ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100`
+
 ## Deployment
 
 `Dockerfile` at the repo root multi-stage builds frontend → backend → a runtime image that bundles

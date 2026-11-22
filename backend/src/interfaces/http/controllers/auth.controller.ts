@@ -6,7 +6,6 @@ import {
   Post,
   Query,
   Res,
-  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -20,6 +19,7 @@ import {
   CurrentUserPayload,
 } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
+import { LogoutWebhookGuard } from '../guards/logout-webhook.guard';
 import { SameOriginGuard } from '../guards/same-origin.guard';
 import { SessionRevokedDto } from '../dto/session-revoked.dto';
 
@@ -65,17 +65,15 @@ export class AuthController {
     return { user };
   }
 
-  /** Webhook called by home-auth on global logout (logoutWebhookUrl). */
+  /**
+   * Webhook called by home-auth on global logout (logoutWebhookUrl). Authenticated by
+   * LogoutWebhookGuard: signed delivery or, during the transition, the legacy `?secret=`.
+   */
   @Public()
+  @UseGuards(LogoutWebhookGuard)
   @Post('disconnect')
   @HttpCode(204)
-  async disconnect(
-    @Body() dto: SessionRevokedDto,
-    @Query('secret') secret?: string,
-  ): Promise<void> {
-    if (secret !== this.config.getOrThrow<string>('AUTH_WEBHOOK_SECRET')) {
-      throw new UnauthorizedException();
-    }
+  async disconnect(@Body() dto: SessionRevokedDto): Promise<void> {
     await this.handleSessionRevoked.execute(dto.userId);
   }
 
