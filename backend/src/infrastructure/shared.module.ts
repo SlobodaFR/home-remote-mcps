@@ -8,7 +8,9 @@ import { MarkitdownConnector } from '../domain/markitdown/markitdown-connector';
 import { OpenAiConnector } from '../domain/openai/openai-connector';
 import { PersonalHealthConnector } from '../domain/personal-health/personal-health-connector';
 import { CredentialCrypto } from '../domain/shared/credential-crypto';
+import { FeatureFlags } from '../domain/shared/feature-flags';
 import { YoutubeConnector } from '../domain/youtube/youtube-connector';
+import { createFeatureFlags } from './feature-flags/openfeature-feature-flags';
 import { HttpCookidooConnector } from './cookidoo/http-cookidoo-connector';
 import { AesGcmCredentialCrypto } from './crypto/aes-gcm-credential-crypto';
 import { HttpGarminConnector } from './garmin/http-garmin-connector';
@@ -25,6 +27,10 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
 @Module({
   providers: [
     { provide: CredentialCrypto, useClass: AesGcmCredentialCrypto },
+    {
+      provide: FeatureFlags,
+      useFactory: () => createFeatureFlags(process.env),
+    },
     { provide: CookidooConnector, useClass: HttpCookidooConnector },
     { provide: GarminConnector, useClass: HttpGarminConnector },
     { provide: HomeAssistantConnector, useClass: HttpHomeAssistantConnector },
@@ -40,6 +46,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
   ],
   exports: [
     CredentialCrypto,
+    FeatureFlags,
     CookidooConnector,
     GarminConnector,
     HomeAssistantConnector,

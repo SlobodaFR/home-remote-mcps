@@ -10,7 +10,8 @@ async function bootstrap(): Promise<void> {
   });
   app.useLogger(app.get(Logger));
   configureApp(app, process.env);
-  // SIGTERM (each deploy) flushes the telemetry queue (PostHogTelemetry.onApplicationShutdown).
+  // SIGTERM (each deploy) flushes the telemetry queue (PostHogTelemetry.onApplicationShutdown) and lets providers
+  // clean up (OpenFeature.close() of the feature flags adapter).
   app.enableShutdownHooks();
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
