@@ -128,7 +128,7 @@ jobs:
           host: ${{ env.VPS_HOST }}
           username: ${{ env.VPS_USER }}
           key: ${{ env.VPS_SSH_KEY }}
-          source: 'deploy/docker-compose.yml,deploy/scripts/update-vps.sh,deploy/Caddyfile'
+          source: 'deploy/docker-compose.yml,deploy/scripts/update-vps.sh,deploy/scripts/pre-deploy-backup.sh,deploy/scripts/restore-sqlite-backup.sh,deploy/Caddyfile'
           target: /opt/remote-mcps
           strip_components: 0
 
@@ -138,11 +138,15 @@ jobs:
           host: ${{ env.VPS_HOST }}
           username: ${{ env.VPS_USER }}
           key: ${{ env.VPS_SSH_KEY }}
-          envs: IMAGE,GARMIN_CONNECTOR_IMAGE,COOKIDOO_CONNECTOR_IMAGE,MARKITDOWN_CONNECTOR_IMAGE,IMAGE_TAG,DEPLOY_DIR
+          envs: IMAGE,GARMIN_CONNECTOR_IMAGE,COOKIDOO_CONNECTOR_IMAGE,MARKITDOWN_CONNECTOR_IMAGE,IMAGE_TAG,DEPLOY_DIR,DATABASE_PATH
           command_timeout: 30m
           script: |
             exec 9>/tmp/home-deploy.lock
             flock -w 900 9 || { echo "deploy lock timeout"; exit 1; }
+            bash /opt/remote-mcps/deploy/scripts/pre-deploy-backup.sh \
+              --service remote-mcps --project home-remote-mcps --volume home-remote-mcps-data \
+              --mount /app/backend/data --db-path "${DATABASE_PATH:-/app/backend/data/home-remote-mcps.sqlite}" --tag "$IMAGE_TAG" \
+              || { echo "pre-deploy backup failed: deploy aborted"; exit 1; }
             chmod +x /opt/remote-mcps/deploy/scripts/update-vps.sh
             sh /opt/remote-mcps/deploy/scripts/update-vps.sh
         env:
