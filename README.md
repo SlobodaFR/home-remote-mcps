@@ -91,6 +91,10 @@ services home-* le recopient tel quel.
   `FEATURES_PIN_AUTH_VERIFY_TOKEN_CLAIMS=false`) l'emporte sur tout, y compris sans
   home-features. Toute autre valeur est ignorée (erreur loguée). Nécessite un redémarrage du conteneur.
   Tout caractère hors `[A-Za-z0-9]` devient `_` (`a-b` et `a.b` partagent donc le même pin).
+- **Flags lus** : `auth-verify-token-claims` (défaut du code : `false`) : exige que les access tokens
+  home-auth soient en RS256, émis par home-auth (`iss` = origine de `AUTH_SERVICE_URL`) pour ce
+  client (`aud` = `AUTH_CLIENT_ID`). Désactivé, seule la signature est vérifiée (comportement
+  historique). Pin d'urgence : `FEATURES_PIN_AUTH_VERIFY_TOKEN_CLAIMS=false`.
 - `OFREP_ENDPOINT`, `OFREP_HEADERS` et `OFREP_TIMEOUT_MS`, que le provider lirait sinon, sont ignorés
   et retirés de l'environnement au démarrage (warn).
 
