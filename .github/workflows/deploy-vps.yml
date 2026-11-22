@@ -139,7 +139,10 @@ jobs:
           username: ${{ env.VPS_USER }}
           key: ${{ env.VPS_SSH_KEY }}
           envs: IMAGE,GARMIN_CONNECTOR_IMAGE,COOKIDOO_CONNECTOR_IMAGE,MARKITDOWN_CONNECTOR_IMAGE,IMAGE_TAG,DEPLOY_DIR
+          command_timeout: 30m
           script: |
+            exec 9>/tmp/home-deploy.lock
+            flock -w 900 9 || { echo "deploy lock timeout"; exit 1; }
             chmod +x /opt/remote-mcps/deploy/scripts/update-vps.sh
             sh /opt/remote-mcps/deploy/scripts/update-vps.sh
         env:
