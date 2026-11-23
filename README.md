@@ -68,6 +68,32 @@ npm run typecheck
 Husky hooks (`pre-commit`, `pre-push`, `commit-msg`) run lint-staged and commitlint
 ([Conventional Commits](https://www.conventionalcommits.org/)) automatically.
 
+## Feature flags (home-features)
+
+Le service lit des flags booléens dans [home-features](https://features.sloboda.fr) via OFREP
+(`@openfeature/server-sdk` + `@openfeature/ofrep-provider`), derrière le port
+`FeatureFlags.isEnabled(key, codeDefault)` (`backend/src/domain/shared/feature-flags.ts`). L'adaptateur
+(`backend/src/infrastructure/feature-flags/`) ne contient rien de propre à ce service : les autres
+services home-* le recopient tel quel.
+
+- **Configuration** : `FEATURES_OFREP_URL` (base `https://features.sloboda.fr/api`, https obligatoire
+  en production) et `FEATURES_API_KEY` (clé serveur liée à l'app et à l'environnement, format
+  `hf_` + 64 hex). Absentes : tous les flags valent le défaut du code (warning unique) ; invalides :
+  idem, avec une erreur au démarrage. Le démarrage n'attend jamais home-features.
+- **Évaluation** : délai de 500 ms par requête ; résultat mémorisé 30 s par clé. Valeur définie pour
+  l'environnement → cette valeur ; pas de valeur (`DISABLED`) ou flag inconnu (`FLAG_NOT_FOUND`) →
+  défaut du code ; autre erreur (réseau, délai, 401, 429, 5xx) → dernière valeur connue, sinon défaut
+  du code, mémorisé 30 s aussi, avec un warn au plus toutes les 5 min par flag et code d'erreur
+  (le message du provider distingue une clé refusée, `unauthorized`, d'une panne). Un 429 suspend
+  toutes les évaluations jusqu'au `Retry-After`. La dernière valeur connue est propre au processus :
+  perdue au redémarrage.
+- **Pin d'urgence** : `FEATURES_PIN_<CLE_EN_MAJ_SNAKE>=true|false` (ex.
+  `FEATURES_PIN_AUTH_VERIFY_TOKEN_CLAIMS=false`) l'emporte sur tout, y compris sans
+  home-features. Toute autre valeur est ignorée (erreur loguée). Nécessite un redémarrage du conteneur.
+  Tout caractère hors `[A-Za-z0-9]` devient `_` (`a-b` et `a.b` partagent donc le même pin).
+- `OFREP_ENDPOINT`, `OFREP_HEADERS` et `OFREP_TIMEOUT_MS`, que le provider lirait sinon, sont ignorés
+  et retirés de l'environnement au démarrage (warn).
+
 ## Deployment
 
 `Dockerfile` at the repo root multi-stage builds frontend → backend → a runtime image that bundles
