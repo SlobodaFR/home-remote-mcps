@@ -80,3 +80,14 @@ service.
 
 Required environment variables are documented inline in `backend/.env.example` and
 `garmin-connector/.env.example`.
+
+Optional telemetry variables (backend, harness convention `ops-telemetry`):
+
+| Variable          | Default                    | Role                                                                                         |
+| ----------------- | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `POSTHOG_API_KEY` | unset (telemetry disabled) | PostHog project key (1Password `POSTHOG_API_KEY`, passed by `deploy-vps.yml`). Unset = NOOP. |
+| `POSTHOG_HOST`    | `https://eu.i.posthog.com` | PostHog ingestion host.                                                                      |
+
+Two anonymous events leave the service: `runtime_health` (event-loop lag, ELU, memory, every 60 s)
+and `http_request` (route template, method, status, duration). No user id, IP, API key, query,
+header or MCP body is ever read. `/healthz` is not reported.
