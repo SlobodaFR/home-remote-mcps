@@ -2,12 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
-import { configureApp } from './interfaces/http/configure-app';
+import {
+  configureApp,
+  NEST_APPLICATION_OPTIONS,
+} from './interfaces/http/configure-app';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bufferLogs: true,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(
+    AppModule,
+    NEST_APPLICATION_OPTIONS,
+  );
   app.useLogger(app.get(Logger));
   configureApp(app, process.env);
   // SIGTERM (each deploy) flushes the telemetry queue (PostHogTelemetry.onApplicationShutdown) and lets providers

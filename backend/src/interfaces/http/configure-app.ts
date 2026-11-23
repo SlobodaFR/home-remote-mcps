@@ -9,6 +9,15 @@ import { createSameOriginMiddleware } from './same-origin.middleware';
 import { isSwaggerEnabled, setupSwagger } from './swagger';
 
 /**
+ * Options of NestFactory.create, shared by main.ts and the tests. `rawBody` keeps the exact bytes
+ * of JSON requests (`req.rawBody`): the logout webhook signature is computed over them.
+ */
+export const NEST_APPLICATION_OPTIONS = {
+  bufferLogs: true,
+  rawBody: true,
+} as const;
+
+/**
  * HTTP setup shared by main.ts and the tests, so what the tests check is what runs.
  *
  * No CORS middleware: the SPA is served by this service (same origin, `/api` relative calls, Vite

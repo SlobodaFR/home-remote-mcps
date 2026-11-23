@@ -214,4 +214,41 @@ describe('validateEnv', () => {
   it('keeps PORT, DATABASE_PATH and MINIO_REGION optional', () => {
     expect(() => validateEnv(validEnv())).not.toThrow();
   });
+
+  describe('AUTH_WEBHOOK_SIGNING_SECRET (optional, 64 lowercase hex)', () => {
+    it.each([undefined, ''])('is optional: %j', (value) => {
+      expect(() =>
+        validateEnv({ ...validEnv(), AUTH_WEBHOOK_SIGNING_SECRET: value }),
+      ).not.toThrow();
+    });
+
+    it('accepts 64 lowercase hexadecimal characters', () => {
+      expect(() =>
+        validateEnv({
+          ...validEnv(),
+          AUTH_WEBHOOK_SIGNING_SECRET: 'ab12'.repeat(16),
+        }),
+      ).not.toThrow();
+    });
+
+    it.each([
+      ['too short', 'ab'.repeat(31)],
+      ['too long', 'ab'.repeat(33)],
+      ['not hex', 'zz'.repeat(32)],
+      ['upper-case (the key is the string as displayed)', 'AB'.repeat(32)],
+      ['the legacy placeholder', 'change-me'],
+      ['padded with a trailing newline', `${'ab'.repeat(32)}\n`],
+      ['padded with a leading space', ` ${'ab'.repeat(32)}`],
+    ])('refuses a value that is %s, without echoing it', (_name, value) => {
+      const message = messageOf({
+        ...validEnv(),
+        AUTH_WEBHOOK_SIGNING_SECRET: value,
+      });
+
+      expect(message).toContain(
+        'AUTH_WEBHOOK_SIGNING_SECRET must be 64 lowercase hexadecimal characters',
+      );
+      expect(message).not.toContain(value);
+    });
+  });
 });
