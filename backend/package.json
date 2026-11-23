@@ -19,7 +19,7 @@
     "@nestjs/core": "^10.4.0",
     "@nestjs/platform-express": "^10.4.0",
     "@nestjs/serve-static": "^4.0.2",
-    "@nestjs/swagger": "^8.1.1",
+    "@nestjs/swagger": "^12.1.2",
     "@nestjs/throttler": "^6.8.0",
     "@nestjs/typeorm": "^10.0.2",
     "@openfeature/ofrep-provider": "^0.2.5",
