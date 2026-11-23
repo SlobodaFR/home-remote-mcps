@@ -2,6 +2,7 @@ import { mkdtempSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ServeStaticModule } from '@nestjs/serve-static';
@@ -12,6 +13,7 @@ import { configureApp } from '../configure-app';
 import { SPA_EXCLUDED_ROUTES } from '../spa';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { HealthModule } from '../modules/health.module';
+import { TelemetryModule } from '../modules/telemetry.module';
 import { HealthController } from './health.controller';
 
 /** Production-shaped: real prefix handling, SPA fallback and its exclude list. */
@@ -21,6 +23,9 @@ async function createApp(): Promise<NestExpressApplication> {
 
   @Module({
     imports: [
+      // No POSTHOG_API_KEY: the real TelemetryModule wires its NOOP adapter.
+      ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }),
+      TelemetryModule,
       ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 1 }] }),
       ServeStaticModule.forRoot({
         rootPath: publicDir,

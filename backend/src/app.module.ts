@@ -12,6 +12,7 @@ import { SharedInfrastructureModule } from './infrastructure/shared.module';
 import { ApiKeysModule } from './interfaces/http/modules/api-keys.module';
 import { AuthModule } from './interfaces/http/modules/auth.module';
 import { HealthModule } from './interfaces/http/modules/health.module';
+import { TelemetryModule } from './interfaces/http/modules/telemetry.module';
 import { CredentialsModule } from './interfaces/http/modules/credentials.module';
 import { CookidooMcpModule } from './interfaces/mcp/cookidoo-mcp.module';
 import { GarminMcpModule } from './interfaces/mcp/garmin-mcp.module';
@@ -39,6 +40,7 @@ import { YoutubeMcpModule } from './interfaces/mcp/youtube-mcp.module';
     ThrottlerModule.forRoot(throttlerOptions),
     DatabaseModule,
     SharedInfrastructureModule,
+    TelemetryModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, 'public'),
       // Everything server-side lives under the /api global prefix (set in
