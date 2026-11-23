@@ -21,6 +21,19 @@ services:
     image: ${GARMIN_CONNECTOR_IMAGE}:${IMAGE_TAG}
     restart: unless-stopped
     env_file: garmin-connector.env
+    # Convention harnais deploy-wait-healthy : /health du connecteur (sans secret), sondé depuis le conteneur.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     # Internal only - no published port. Reached by home-remote-mcps at
     # http://garmin-connector:8000 over the compose network.
     dns:
@@ -31,6 +44,19 @@ services:
     image: ${COOKIDOO_CONNECTOR_IMAGE}:${IMAGE_TAG}
     restart: unless-stopped
     env_file: cookidoo-connector.env
+    # Convention harnais deploy-wait-healthy : /health du connecteur (sans secret), sondé depuis le conteneur.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     # Internal only - no published port. Reached by home-remote-mcps at
     # http://cookidoo-connector:8000 over the compose network.
     dns:
@@ -41,6 +67,19 @@ services:
     image: ${MARKITDOWN_CONNECTOR_IMAGE}:${IMAGE_TAG}
     restart: unless-stopped
     env_file: markitdown-connector.env
+    # Convention harnais deploy-wait-healthy : /health du connecteur (sans secret), sondé depuis le conteneur.
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
     # Internal only - no published port. Reached by home-remote-mcps at
     # http://markitdown-connector:8000 over the compose network.
     dns:
