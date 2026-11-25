@@ -47,5 +47,10 @@
     "@scarf/scarf": false,
     "fsevents": false,
     "@swc/core": true
+  },
+  "overrides": {
+    "@nestjs/swagger": {
+      "typescript": "^7.0.2"
+    }
   }
 }
