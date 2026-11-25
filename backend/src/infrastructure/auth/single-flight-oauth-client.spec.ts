@@ -29,6 +29,7 @@ function makeUpstream(refresh: (rt: string) => Promise<TokenPair>) {
     authorizeUrl: vi.fn<(redirectUri: string) => string>(
       (redirectUri) => `https://auth/${redirectUri}`,
     ),
+    logoutUrl: vi.fn<() => string>(() => 'https://auth/logout'),
     exchangeCode: vi.fn<
       (code: string, redirectUri: string) => Promise<TokenPair>
     >(async () => pair('exchanged')),
@@ -46,6 +47,14 @@ function makeUpstream(refresh: (rt: string) => Promise<TokenPair>) {
 }
 
 describe('SingleFlightOAuthClient', () => {
+  it('delegates logoutUrl to the inner client', () => {
+    const upstream = makeUpstream(async () => pair('x'));
+    const client = new SingleFlightOAuthClient(upstream);
+    const params = { postLogoutRedirectUri: 'https://app/back', state: 's' };
+    expect(client.logoutUrl(params)).toBe('https://auth/logout');
+    expect(upstream.logoutUrl).toHaveBeenCalledWith(params);
+  });
+
   it('merges concurrent refreshes of the same token into one upstream call', async () => {
     const d = deferred<TokenPair>();
     const upstream = makeUpstream(() => d.promise);
