@@ -68,11 +68,12 @@ describe('GET /healthz', () => {
     await request(app.getHttpServer()).get('/api/healthz').expect(404);
   });
 
-  it('is never the SPA shell, also for sub-paths', async () => {
+  it('is never the SPA shell, also for sub-paths (Nest 12: plain 404 HTML page)', async () => {
     const response = await request(app.getHttpServer())
       .get('/healthz/unknown')
       .expect(404);
 
+    expect(response.headers['content-type']).toMatch(/text\/html/);
     expect(response.text).not.toContain('spa');
   });
 
