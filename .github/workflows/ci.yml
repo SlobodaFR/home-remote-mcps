@@ -111,34 +111,90 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build main app image (no push)
+      - name: Lockfile guard (runtime packages must live in /app/node_modules)
+        run: sh .github/scripts/lockfile-runtime-check.sh --service home-remote-mcps --dockerfile Dockerfile --workspace backend
+
+      - name: Build main app image (loaded, no push)
         uses: docker/build-push-action@v6
         with:
+          platforms: linux/amd64
           context: .
+          load: true
           push: false
+          tags: home-remote-mcps:ci-${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha
           cache-to: type=gha,mode=max,ignore-error=true
 
-      - name: Build garmin-connector image (no push)
+      # L'entrypoint restaure la base depuis MinIO (litestream) : un faux S3 vide (.github/ci/s3-stub) en dépendance,
+      # aucun identifiant réel. Les connecteurs sont injoignables : ils ne sont pas appelés au démarrage.
+      - name: Build fake S3 for the boot check
+        run: docker build -t home-remote-mcps-s3-stub:ci-${{ github.run_id }}-${{ github.run_attempt }} .github/ci/s3-stub
+
+      - name: Boot check main app (the container must start and stay healthy)
+        run: |
+          sh .github/scripts/docker-boot-check.sh --service home-remote-mcps --image home-remote-mcps:ci-${{ github.run_id }}-${{ github.run_attempt }} --rm-image \
+            --volume /app/backend/data --path /healthz --expect /healthz=200 \
+            --expect /api/api-keys=401 --expect /api/unknown=404 --forbid-ts \
+            --sidecar home-remote-mcps-s3-stub:ci-${{ github.run_id }}-${{ github.run_attempt }}=minio \
+            --env AUTH_SERVICE_URL=https://auth.example.test --env AUTH_CLIENT_ID=home-remote-mcps \
+            --env FRONTEND_URL=https://mcps.example.test --env PUBLIC_BASE_URL=https://mcps.example.test \
+            --env GARMIN_CONNECTOR_URL=http://garmin-connector:8000 \
+            --env COOKIDOO_CONNECTOR_URL=http://cookidoo-connector:8000 \
+            --env MARKITDOWN_CONNECTOR_URL=http://markitdown-connector:8000 \
+            --env MINIO_ENDPOINT=http://minio:9000 --env MINIO_BUCKET=ci-dummy \
+            --env MINIO_ACCESS_KEY_ID=ci-dummy --env MINIO_SECRET_ACCESS_KEY=ci-dummy-secret \
+            --secret AUTH_CLIENT_SECRET --secret AUTH_WEBHOOK_SECRET --secret CREDENTIALS_ENCRYPTION_KEY \
+            --secret PSEUDONYM_SECRET --secret GARMIN_CONNECTOR_SECRET --secret COOKIDOO_CONNECTOR_SECRET \
+            --secret MARKITDOWN_CONNECTOR_SECRET
+
+      - name: Build garmin-connector image (loaded, no push)
         uses: docker/build-push-action@v6
         with:
+          platforms: linux/amd64
           context: garmin-connector
+          load: true
           push: false
+          tags: home-remote-mcps-garmin-connector:ci-${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha,scope=garmin-connector
           cache-to: type=gha,mode=max,scope=garmin-connector,ignore-error=true
 
-      - name: Build cookidoo-connector image (no push)
+      - name: Boot check garmin-connector (the container must start and stay up)
+        run: |
+          sh .github/scripts/docker-boot-check.sh --service home-remote-mcps-garmin-connector --image home-remote-mcps-garmin-connector:ci-${{ github.run_id }}-${{ github.run_attempt }} --rm-image \
+            --path /health --port 8000 --expect /health=200 --env GARMIN_CONNECTOR_SECRET=ci-dummy
+
+      - name: Build cookidoo-connector image (loaded, no push)
         uses: docker/build-push-action@v6
         with:
+          platforms: linux/amd64
           context: cookidoo-connector
+          load: true
           push: false
+          tags: home-remote-mcps-cookidoo-connector:ci-${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha,scope=cookidoo-connector
           cache-to: type=gha,mode=max,scope=cookidoo-connector,ignore-error=true
 
-      - name: Build markitdown-connector image (no push)
+      - name: Boot check cookidoo-connector (the container must start and stay up)
+        run: |
+          sh .github/scripts/docker-boot-check.sh --service home-remote-mcps-cookidoo-connector --image home-remote-mcps-cookidoo-connector:ci-${{ github.run_id }}-${{ github.run_attempt }} --rm-image \
+            --path /health --port 8000 --expect /health=200 --env COOKIDOO_CONNECTOR_SECRET=ci-dummy
+
+      - name: Build markitdown-connector image (loaded, no push)
         uses: docker/build-push-action@v6
         with:
+          platforms: linux/amd64
           context: markitdown-connector
+          load: true
           push: false
+          tags: home-remote-mcps-markitdown-connector:ci-${{ github.run_id }}-${{ github.run_attempt }}
           cache-from: type=gha,scope=markitdown-connector
           cache-to: type=gha,mode=max,scope=markitdown-connector,ignore-error=true
+
+      - name: Boot check markitdown-connector (the container must start and stay up)
+        run: |
+          sh .github/scripts/docker-boot-check.sh --service home-remote-mcps-markitdown-connector --image home-remote-mcps-markitdown-connector:ci-${{ github.run_id }}-${{ github.run_attempt }} --rm-image \
+            --path /health --port 8000 --expect /health=200 --env MARKITDOWN_CONNECTOR_SECRET=ci-dummy
+
+      - name: Remove fake S3 image
+        if: always()
+        run: docker rmi home-remote-mcps-s3-stub:ci-${{ github.run_id }}-${{ github.run_attempt }} || true
