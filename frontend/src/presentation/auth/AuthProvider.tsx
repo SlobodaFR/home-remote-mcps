@@ -16,7 +16,18 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+/** Top-level navigation (never fetch): home-auth's logout needs its SSO cookie. */
+function navigateTo(url: string): void {
+  window.location.assign(url);
+}
+
+export function AuthProvider({
+  children,
+  navigate = navigateTo,
+}: {
+  children: ReactNode;
+  navigate?: (url: string) => void;
+}) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -30,9 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await apiClient.logout();
+    const { redirectTo } = await apiClient.logout();
+    if (redirectTo) {
+      // The page leaves for home-auth, which sends the browser back to /login.
+      navigate(redirectTo);
+      return;
+    }
     setUser(null);
-  }, []);
+  }, [navigate]);
 
   return (
     <AuthContext.Provider value={{ user, loading, logout }}>

@@ -95,6 +95,33 @@ services home-* le recopient tel quel.
   home-auth soient en RS256, émis par home-auth (`iss` = origine de `AUTH_SERVICE_URL`) pour ce
   client (`aud` = `AUTH_CLIENT_ID`). Désactivé, seule la signature est vérifiée (comportement
   historique). Pin d'urgence : `FEATURES_PIN_AUTH_VERIFY_TOKEN_CLAIMS=false`.
+- `auth-rp-initiated-logout` (défaut du code : `false`) : `POST /api/auth/logout` renvoie
+  `{ redirect_to }` (URL de déconnexion de home-auth, PC10) que la SPA ouvre par navigation de premier
+  niveau. Désactivé : déconnexion locale seule (`redirect_to: null`). Flag propre à ce service, distinct
+  de celui de home-auth. Pin d'urgence : `FEATURES_PIN_AUTH_RP_INITIATED_LOGOUT=false`.
+
+### Déconnexion initiée par le service (PC10)
+
+Derrière `auth-rp-initiated-logout`. `POST /api/auth/logout` (même origine, `SameOriginGuard`) efface
+toujours `access_token` et `refresh_token` (home-auth ne révoque rien), puis, flag actif, pose le cookie
+`logout_state` (httpOnly, `SameSite=Lax`, `Path=/api/auth`, 10 min, `Secure` en production) et renvoie
+`{ redirect_to }` = `GET <AUTH_SERVICE_URL>/logout?client_id&post_logout_redirect_uri&state[&access_token_hint]`.
+Le hint est l'access token du cookie s'il est valide, sinon un access token obtenu par refresh (3 s max ;
+le nouveau refresh token n'est jamais stocké ; échec = pas de hint, donc écran de confirmation de
+home-auth, jamais un signal de déconnexion). Le `post_logout_redirect_uri` est
+`FRONTEND_URL/api/auth/logged-out` (même origine que la redirectUri enregistrée).
+`GET /api/auth/logged-out?state=` compare le `state` au cookie (état absent, répété ou différent :
+`/login` sans bandeau), efface le cookie et redirige vers `/login?logged_out=1` (bandeau « Vous avez été
+déconnecté. », jamais d'`/authorize` automatique). Réponses en `Cache-Control: no-store`.
+
+Ordre d'activation : vérifier dans l'admin home-auth que l'origine de la redirectUri du client
+`home-remote-mcps` est celle de `FRONTEND_URL` (sinon home-auth répond `invalid_request` sur son
+`/error`), activer d'abord le flag dans home-auth, puis celui de ce service (app `home-remote-mcps` de
+home-features). Retour arrière : désactiver ce service d'abord (ou
+`FEATURES_PIN_AUTH_RP_INITIATED_LOGOUT=false` + redémarrage). Service actif alors que home-auth est
+inactif : l'utilisateur est déconnecté puis arrive sur un `404` JSON de home-auth. Annuler sur l'écran de
+confirmation de home-auth ramène à la SPA déjà déconnectée localement : le prochain appel API renvoie 401.
+
 - `OFREP_ENDPOINT`, `OFREP_HEADERS` et `OFREP_TIMEOUT_MS`, que le provider lirait sinon, sont ignorés
   et retirés de l'environnement au démarrage (warn).
 

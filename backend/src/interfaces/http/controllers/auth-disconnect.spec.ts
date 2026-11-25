@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import type { MockInstance } from 'vitest';
 import { HandleOAuthCallbackUseCase } from '../../../application/auth/handle-oauth-callback.use-case';
+import { InitiateServiceLogoutUseCase } from '../../../application/auth/initiate-service-logout.use-case';
 import { HandleSessionRevokedUseCase } from '../../../application/auth/handle-session-revoked.use-case';
 import { OAuthClient } from '../../../domain/auth/oauth-client';
 import { computeWebhookSignature } from '../../../domain/auth/webhook-signature';
@@ -62,6 +63,7 @@ describe('POST /api/auth/disconnect (signed logout webhook, PC7)', () => {
         { provide: FeatureFlags, useValue: flags },
         { provide: OAuthClient, useValue: {} },
         { provide: HandleOAuthCallbackUseCase, useValue: {} },
+        { provide: InitiateServiceLogoutUseCase, useValue: {} },
         {
           provide: HandleSessionRevokedUseCase,
           useValue: {
