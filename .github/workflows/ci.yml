@@ -125,17 +125,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max,ignore-error=true
 
-      # L'entrypoint restaure la base depuis MinIO (litestream) : un faux S3 vide (.github/ci/s3-stub) en dépendance,
-      # aucun identifiant réel. Les connecteurs sont injoignables : ils ne sont pas appelés au démarrage.
-      - name: Build fake S3 for the boot check
-        run: docker build -t home-remote-mcps-s3-stub:ci-${{ github.run_id }}-${{ github.run_attempt }} .github/ci/s3-stub
-
       - name: Boot check main app (the container must start and stay healthy)
         run: |
           sh .github/scripts/docker-boot-check.sh --service home-remote-mcps --image home-remote-mcps:ci-${{ github.run_id }}-${{ github.run_attempt }} --rm-image \
             --volume /app/backend/data --path /healthz --expect /healthz=200 \
             --expect /api/api-keys=401 --expect /api/unknown=404 --forbid-ts \
-            --sidecar home-remote-mcps-s3-stub:ci-${{ github.run_id }}-${{ github.run_attempt }}=minio \
+            --s3-stub minio \
             --env AUTH_SERVICE_URL=https://auth.example.test --env AUTH_CLIENT_ID=home-remote-mcps \
             --env FRONTEND_URL=https://mcps.example.test --env PUBLIC_BASE_URL=https://mcps.example.test \
             --env GARMIN_CONNECTOR_URL=http://garmin-connector:8000 \
@@ -194,7 +189,3 @@ jobs:
         run: |
           sh .github/scripts/docker-boot-check.sh --service home-remote-mcps-markitdown-connector --image home-remote-mcps-markitdown-connector:ci-${{ github.run_id }}-${{ github.run_attempt }} --rm-image \
             --path /health --port 8000 --expect /health=200 --env MARKITDOWN_CONNECTOR_SECRET=ci-dummy
-
-      - name: Remove fake S3 image
-        if: always()
-        run: docker rmi home-remote-mcps-s3-stub:ci-${{ github.run_id }}-${{ github.run_attempt }} || true
