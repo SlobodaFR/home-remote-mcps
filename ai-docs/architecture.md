@@ -104,12 +104,16 @@ bucket).
   single-step, tests the long-lived token against the live instance before persisting (mirrors
   Garmin's "only persist on success", no MFA dance to justify a pending state).
 - **YouTube** — two-step OAuth2, split across an authenticated and an unauthenticated request:
-  1. `StartYoutubeConnectionUseCase` (authenticated, browser session) stores the user's own Google
-     Cloud OAuth client id/secret encrypted on a `pending` `Credential` row and returns Google's
-     consent `authorizeUrl`, with `state` = the pending credential's id.
+  1. `StartYoutubeConnectionUseCase` (authenticated, browser session) keeps the user's own Google
+     Cloud OAuth client id/secret (encrypted) in the in-memory, single-use `YoutubeOAuthFlow`
+     (10 min) and returns Google's consent `authorizeUrl`, with a random `state` bound to the
+     browser by cookie. The user's existing `Credential` row is never modified (an empty
+     `pending_mfa` row is created only if none exists), so abandoning the flow cannot cost a valid
+     connection.
   2. `CompleteYoutubeConnectionUseCase` (public, unauthenticated — Google calls this back, no
-     session cookie available) reads `state` back to find the pending credential, exchanges the
-     `code` for tokens, and marks it validated.
+     session cookie available) consumes `state` to get the flow (user, credential, client),
+     exchanges the `code` for tokens, and only then marks the credential validated. A failed
+     exchange leaves an `ok` credential untouched.
 - **Personal health** — `SavePersonalHealthConnectionUseCase.execute(userId, apiKey)`:
   single-step, tests the `health.sloboda.fr` API key before persisting (mirrors Home Assistant;
   fixed base URL instead of a user-supplied one).
@@ -119,7 +123,7 @@ bucket).
   the only per-user value, and it isn't sensitive.
 
 All converge on the same `Credential` entity (`domain/credential/credential.ts`) with states
-driven by `markPending` / `markValidated` / `markFailed`.
+driven by `markValidated` / `markFailed`.
 
 ## Auth model detail
 

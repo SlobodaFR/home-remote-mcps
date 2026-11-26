@@ -45,7 +45,7 @@ export class CompleteYoutubeConnectionUseCase {
       : null;
     if (
       !flow ||
-      !credential?.encryptedTokens?.length ||
+      !credential ||
       credential.userId !== flow.userId ||
       credential.service !== YOUTUBE_SERVICE
     ) {
@@ -56,7 +56,7 @@ export class CompleteYoutubeConnectionUseCase {
     }
 
     const { clientId, clientSecret } = JSON.parse(
-      this.credentialCrypto.decrypt(credential.encryptedTokens),
+      this.credentialCrypto.decrypt(flow.encryptedClient),
     ) as { clientId: string; clientSecret: string };
 
     const exchanged = await this.youtubeConnector.exchangeCode(
@@ -66,9 +66,11 @@ export class CompleteYoutubeConnectionUseCase {
       redirectUri,
     );
     if (exchanged.status === 'error') {
-      const now = new Date();
-      credential.markFailed(exchanged.message, now);
-      await this.credentialRepository.save(credential);
+      // A previously valid connection survives a failed re-connection attempt.
+      if (credential.status !== 'ok') {
+        credential.markFailed(exchanged.message, new Date());
+        await this.credentialRepository.save(credential);
+      }
       return { status: 'error', message: exchanged.message };
     }
 
