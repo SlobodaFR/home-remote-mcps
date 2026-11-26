@@ -69,3 +69,38 @@ export function clearLogoutStateCookie(
     logoutStateCookieOptions(config),
   );
 }
+
+export const YOUTUBE_OAUTH_STATE_COOKIE_NAME = 'youtube_oauth_state';
+const YOUTUBE_OAUTH_STATE_MAX_AGE_MS = 10 * 60 * 1000;
+
+/** Same options for set and clear; Path covers only the callback's route family. */
+function youtubeOAuthStateCookieOptions(config: ConfigService) {
+  return {
+    httpOnly: true,
+    secure: config.get<string>('NODE_ENV') === 'production',
+    sameSite: 'lax' as const,
+    path: '/api/credentials/youtube',
+  };
+}
+
+/** Binds the YouTube OAuth `state` to the browser that started the flow. */
+export function setYoutubeOAuthStateCookie(
+  response: Response,
+  state: string,
+  config: ConfigService,
+): void {
+  response.cookie(YOUTUBE_OAUTH_STATE_COOKIE_NAME, state, {
+    ...youtubeOAuthStateCookieOptions(config),
+    maxAge: YOUTUBE_OAUTH_STATE_MAX_AGE_MS,
+  });
+}
+
+export function clearYoutubeOAuthStateCookie(
+  response: Response,
+  config: ConfigService,
+): void {
+  response.clearCookie(
+    YOUTUBE_OAUTH_STATE_COOKIE_NAME,
+    youtubeOAuthStateCookieOptions(config),
+  );
+}

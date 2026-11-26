@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'crypto';
 import {
   Body,
   Controller,
@@ -7,11 +8,12 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { CompleteYoutubeConnectionUseCase } from '../../../application/credentials/complete-youtube-connection.use-case';
 import { DeleteCredentialUseCase } from '../../../application/credentials/delete-credential.use-case';
 import { ListCookidooLocalizationsUseCase } from '../../../application/credentials/list-cookidoo-localizations.use-case';
@@ -48,10 +50,7 @@ import {
   StartGarminLoginResult,
   StartGarminLoginUseCase,
 } from '../../../application/credentials/start-garmin-login.use-case';
-import {
-  StartYoutubeConnectionResult,
-  StartYoutubeConnectionUseCase,
-} from '../../../application/credentials/start-youtube-connection.use-case';
+import { StartYoutubeConnectionUseCase } from '../../../application/credentials/start-youtube-connection.use-case';
 import {
   SubmitGarminMfaResult,
   SubmitGarminMfaUseCase,
@@ -61,6 +60,11 @@ import {
   CurrentUser,
   CurrentUserPayload,
 } from '../decorators/current-user.decorator';
+import {
+  clearYoutubeOAuthStateCookie,
+  setYoutubeOAuthStateCookie,
+  YOUTUBE_OAUTH_STATE_COOKIE_NAME,
+} from '../auth-cookies';
 import { Public } from '../decorators/public.decorator';
 import { SaveCookidooConnectionDto } from '../dto/save-cookidoo-connection.dto';
 import { SaveHomeAssistantConnectionDto } from '../dto/save-home-assistant-connection.dto';
@@ -208,39 +212,74 @@ export class CredentialsController {
   async startYoutube(
     @CurrentUser() user: CurrentUserPayload,
     @Body() dto: StartYoutubeConnectionDto,
-  ): Promise<StartYoutubeConnectionResult> {
-    return this.startYoutubeConnection.execute(
-      user.id,
-      dto.clientId,
-      dto.clientSecret,
-      this.youtubeCallbackUrl(),
-    );
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ pendingId: string; authorizeUrl: string }> {
+    res.setHeader('Cache-Control', 'no-store');
+    const { pendingId, authorizeUrl, state } =
+      await this.startYoutubeConnection.execute(
+        user.id,
+        dto.clientId,
+        dto.clientSecret,
+        this.youtubeCallbackUrl(),
+      );
+    setYoutubeOAuthStateCookie(res, state, this.config);
+    return { pendingId, authorizeUrl };
   }
 
+  /**
+   * Public (Google redirects the browser here). The `state` must equal the
+   * cookie set by POST youtube/start (same browser), and is then consumed
+   * (single use, 10 min TTL, bound server side to the initiating user). The
+   * cookie is checked BEFORE consuming so a cookie-less request cannot burn
+   * someone's pending flow.
+   */
   @Public()
   @Get('youtube/callback')
   async youtubeCallback(
-    @Query('state') pendingId: string,
-    @Query('code') code: string,
-    @Query('error') error: string | undefined,
+    @Query('state') state: unknown,
+    @Query('code') code: unknown,
+    @Query('error') error: unknown,
+    @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
+    res.setHeader('Cache-Control', 'no-store');
     const frontendUrl = this.config.getOrThrow<string>('FRONTEND_URL');
-    if (error) {
+    const fail = (message: string): void => {
       res.redirect(
-        `${frontendUrl}/credentials?youtube=error&message=${encodeURIComponent(error)}`,
+        `${frontendUrl}/?youtube=error&message=${encodeURIComponent(message)}`,
       );
+    };
+    const cookie: unknown = req.cookies[YOUTUBE_OAUTH_STATE_COOKIE_NAME];
+    clearYoutubeOAuthStateCookie(res, this.config);
+    if (
+      typeof state !== 'string' ||
+      state === '' ||
+      typeof cookie !== 'string' ||
+      cookie === '' ||
+      !timingSafeEqual(sha256(state), sha256(cookie))
+    ) {
+      fail('Unknown or expired YouTube connection attempt');
+      return;
+    }
+    if (error !== undefined) {
+      await this.completeYoutubeConnection.abort(state);
+      fail('Google a refusé la connexion YouTube');
+      return;
+    }
+    if (typeof code !== 'string' || code === '') {
+      await this.completeYoutubeConnection.abort(state);
+      fail('Missing authorization code');
       return;
     }
     const result = await this.completeYoutubeConnection.execute(
-      pendingId,
+      state,
       code,
       this.youtubeCallbackUrl(),
     );
     res.redirect(
       result.status === 'ok'
-        ? `${frontendUrl}/credentials?youtube=ok`
-        : `${frontendUrl}/credentials?youtube=error&message=${encodeURIComponent(result.message)}`,
+        ? `${frontendUrl}/?youtube=ok`
+        : `${frontendUrl}/?youtube=error&message=${encodeURIComponent(result.message)}`,
     );
   }
 
@@ -259,4 +298,8 @@ export class CredentialsController {
       this.config.getOrThrow<string>('PUBLIC_BASE_URL'),
     ).toString();
   }
+}
+
+function sha256(value: string): Buffer {
+  return createHash('sha256').update(value).digest();
 }

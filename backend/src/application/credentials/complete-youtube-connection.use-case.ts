@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CredentialRepository } from '../../domain/credential/credential.repository';
+import { YoutubeOAuthStateStore } from '../../domain/credential/youtube-oauth-state-store';
 import { CredentialCrypto } from '../../domain/shared/credential-crypto';
 import {
   YoutubeCredentials,
@@ -14,9 +15,9 @@ export type CompleteYoutubeConnectionResult =
 /**
  * Second step of the YouTube OAuth dance: Google redirects the browser here
  * with an authorization code and the `state` we handed it in
- * StartYoutubeConnectionUseCase (the pending credential's id - this route is
- * public and unauthenticated, so `state` is how we find our way back to the
- * right user without a session cookie).
+ * StartYoutubeConnectionUseCase: a random, single-use, 10-minute secret that
+ * maps (server side) to the initiating user and pending credential. The
+ * controller has already checked it against the browser-bound cookie.
  */
 @Injectable()
 export class CompleteYoutubeConnectionUseCase {
@@ -24,16 +25,28 @@ export class CompleteYoutubeConnectionUseCase {
     private readonly youtubeConnector: YoutubeConnector,
     private readonly credentialRepository: CredentialRepository,
     private readonly credentialCrypto: CredentialCrypto,
+    private readonly stateStore: YoutubeOAuthStateStore,
   ) {}
 
+  /** Google reported an error: the attempt is over, burn its state. */
+  async abort(state: string): Promise<void> {
+    await this.stateStore.consume(state);
+  }
+
   async execute(
-    pendingId: string,
+    state: string,
     code: string,
     redirectUri: string,
   ): Promise<CompleteYoutubeConnectionResult> {
-    const credential = await this.credentialRepository.findById(pendingId);
+    // Consumed first: whatever happens next, this state can never be replayed.
+    const flow = await this.stateStore.consume(state);
+    const credential = flow
+      ? await this.credentialRepository.findById(flow.credentialId)
+      : null;
     if (
+      !flow ||
       !credential?.encryptedTokens?.length ||
+      credential.userId !== flow.userId ||
       credential.service !== YOUTUBE_SERVICE
     ) {
       return {
