@@ -280,16 +280,17 @@ function buildServiceData(
   def: ServiceToolDef,
   input: Record<string, unknown>,
 ): Record<string, unknown> {
-  const serviceData: Record<string, unknown> = {
-    entity_id: input.entityId,
-  };
-  for (const param of def.params) {
-    const value = input[param.argName];
-    if (value !== undefined) {
-      serviceData[param.key ?? param.argName] = value;
-    }
-  }
-  return serviceData;
+  const entries = def.params
+    .filter(
+      (param) =>
+        Object.prototype.hasOwnProperty.call(input, param.argName) &&
+        input[param.argName] !== undefined,
+    )
+    .map((param): [string, unknown] => [
+      param.key ?? param.argName,
+      input[param.argName],
+    ]);
+  return Object.fromEntries([['entity_id', input.entityId], ...entries]);
 }
 
 /** Registers one tool per ServiceToolDef, scoped to one authenticated user. */
