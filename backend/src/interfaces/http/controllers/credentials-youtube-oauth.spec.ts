@@ -169,10 +169,9 @@ describe('YouTube OAuth start/callback (issue #48)', () => {
       expect(first.state).not.toBe(second.state);
       expect(first.state).not.toBe(first.res.body.pendingId);
       expect(first.cookie).toBe(`${COOKIE}=${first.state}`);
-      expect(Object.keys(first.res.body as object).sort()).toEqual([
-        'authorizeUrl',
-        'pendingId',
-      ]);
+      expect(new Set(Object.keys(first.res.body as object))).toEqual(
+        new Set(['authorizeUrl', 'pendingId']),
+      );
     });
 
     it('sets a short-lived HttpOnly Lax cookie scoped to the youtube routes', async () => {

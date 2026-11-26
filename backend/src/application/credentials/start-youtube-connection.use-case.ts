@@ -55,7 +55,20 @@ export class StartYoutubeConnectionUseCase {
         createdAt: now,
         updatedAt: now,
       });
-      await this.credentialRepository.save(credential);
+      try {
+        await this.credentialRepository.save(credential);
+      } catch (error) {
+        // Two first-time starts of the same user can race on the unique (user_id, service)
+        // index: the loser adopts the row the winner just created.
+        const winner = await this.credentialRepository.findByUserAndService(
+          userId,
+          YOUTUBE_SERVICE,
+        );
+        if (!winner) {
+          throw error;
+        }
+        credential = winner;
+      }
     }
 
     const state = await this.stateStore.issue({

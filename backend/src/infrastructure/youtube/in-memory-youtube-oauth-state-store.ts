@@ -1,3 +1,4 @@
+import { OnModuleDestroy } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
 import {
   YoutubeOAuthFlow,
@@ -16,16 +17,34 @@ interface Entry {
  * merely forces the user to restart a flow that lives at most 10 minutes.
  * Keyed by sha256(state) so the raw secret is not retained in the heap.
  */
-export class InMemoryYoutubeOAuthStateStore extends YoutubeOAuthStateStore {
+export class InMemoryYoutubeOAuthStateStore
+  extends YoutubeOAuthStateStore
+  implements OnModuleDestroy
+{
   /** Insertion order is expiry order (constant TTL): purging stops at the first live entry. */
   private readonly entries = new Map<string, Entry>();
   private readonly keyByUser = new Map<string, string>();
+  private readonly sweepTimer: NodeJS.Timeout | undefined;
 
   constructor(
     private readonly ttlMs: number = YOUTUBE_OAUTH_STATE_TTL_MS,
     private readonly now: () => number = Date.now,
+    sweepIntervalMs: number = ttlMs,
   ) {
     super();
+    // Purge on access alone would leave the encrypted client secrets of an idle service in the
+    // heap past their TTL. unref(): the timer never keeps the process alive.
+    if (sweepIntervalMs > 0) {
+      this.sweepTimer = setInterval(
+        () => this.purge(this.now()),
+        sweepIntervalMs,
+      );
+      this.sweepTimer.unref();
+    }
+  }
+
+  onModuleDestroy(): void {
+    clearInterval(this.sweepTimer);
   }
 
   get size(): number {

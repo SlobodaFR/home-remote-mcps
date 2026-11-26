@@ -183,4 +183,22 @@ describe('database migrations', () => {
     ).toEqual(declared.sort(byName));
     await ds.destroy();
   });
+
+  // down() would drop every table: a mistaken migration:revert must not destroy production data.
+  it('refuse to revert the baseline migration', async () => {
+    const ds = dataSource(':memory:');
+    await ds.initialize();
+    await ds.runMigrations();
+    await ds.query(SAMPLE_ROWS[0]);
+
+    await expect(ds.undoLastMigration()).rejects.toThrow(
+      /baseline migration: revert not supported, restore a backup/,
+    );
+
+    expect(await ds.query('SELECT id FROM users')).toEqual([
+      { id: 'u1' },
+      { id: 'u2' },
+    ]);
+    await ds.destroy();
+  });
 });
