@@ -15,6 +15,8 @@ import { StartGarminLoginUseCase } from '../../../application/credentials/start-
 import { StartYoutubeConnectionUseCase } from '../../../application/credentials/start-youtube-connection.use-case';
 import { SubmitGarminMfaUseCase } from '../../../application/credentials/submit-garmin-mfa.use-case';
 import { CredentialRepository } from '../../../domain/credential/credential.repository';
+import { YoutubeOAuthStateStore } from '../../../domain/credential/youtube-oauth-state-store';
+import { InMemoryYoutubeOAuthStateStore } from '../../../infrastructure/youtube/in-memory-youtube-oauth-state-store';
 import { CredentialOrmEntity } from '../../../infrastructure/persistence/entities/credential.orm-entity';
 import { TypeOrmCredentialRepository } from '../../../infrastructure/persistence/repositories/typeorm-credential.repository';
 import { CredentialsController } from '../controllers/credentials.controller';
@@ -24,6 +26,10 @@ import { CredentialsController } from '../controllers/credentials.controller';
   controllers: [CredentialsController],
   providers: [
     { provide: CredentialRepository, useClass: TypeOrmCredentialRepository },
+    {
+      provide: YoutubeOAuthStateStore,
+      useFactory: () => new InMemoryYoutubeOAuthStateStore(),
+    },
     ListCredentialsUseCase,
     StartGarminLoginUseCase,
     SubmitGarminMfaUseCase,

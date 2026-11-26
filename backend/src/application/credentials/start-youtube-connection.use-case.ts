@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Credential } from '../../domain/credential/credential';
 import { CredentialRepository } from '../../domain/credential/credential.repository';
 import { CredentialCrypto } from '../../domain/shared/credential-crypto';
+import { YoutubeOAuthStateStore } from '../../domain/credential/youtube-oauth-state-store';
 import { YoutubeConnector } from '../../domain/youtube/youtube-connector';
 
 export const YOUTUBE_SERVICE = 'youtube';
@@ -10,6 +11,8 @@ export const YOUTUBE_SERVICE = 'youtube';
 export interface StartYoutubeConnectionResult {
   pendingId: string;
   authorizeUrl: string;
+  /** Same value as the `state` inside authorizeUrl; the controller binds it to the browser by cookie. */
+  state: string;
 }
 
 /**
@@ -25,6 +28,7 @@ export class StartYoutubeConnectionUseCase {
     private readonly youtubeConnector: YoutubeConnector,
     private readonly credentialRepository: CredentialRepository,
     private readonly credentialCrypto: CredentialCrypto,
+    private readonly stateStore: YoutubeOAuthStateStore,
   ) {}
 
   async execute(
@@ -56,13 +60,18 @@ export class StartYoutubeConnectionUseCase {
     );
     await this.credentialRepository.save(credential);
 
+    const state = await this.stateStore.issue({
+      userId,
+      credentialId: credential.id,
+    });
     return {
       pendingId: credential.id,
       authorizeUrl: this.youtubeConnector.authorizeUrl(
         clientId,
         redirectUri,
-        credential.id,
+        state,
       ),
+      state,
     };
   }
 }
