@@ -52,7 +52,12 @@ COPY --from=backend-build /app/backend/package.json backend/package.json
 COPY backend/litestream.yml backend/litestream.yml
 COPY backend/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
-    && mkdir -p /app/backend/data
+    && mkdir -p /app/backend/data \
+    && chown node:node /app/backend/data
+# Non root (uid 1000). Seul /app/backend/data (volume) est inscriptible ; le code reste a root.
+# Un volume existant cree par l'ancienne image (root) est rendu a l'uid 1000 par le deploiement :
+# deploy/scripts/fix-volume-owner.sh (convention harnais docker-nonroot-volume).
+USER node
 VOLUME ["/app/backend/data"]
 WORKDIR /app/backend
 EXPOSE 3000
