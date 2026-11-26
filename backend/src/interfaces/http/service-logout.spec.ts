@@ -2,7 +2,6 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import request from 'supertest';
 import { AccessTokenVerifier } from '../../domain/auth/access-token-verifier';
 import { OAuthClient, TokenPair } from '../../domain/auth/oauth-client';
@@ -10,6 +9,7 @@ import { FeatureFlags } from '../../domain/shared/feature-flags';
 import { createFeatureFlags } from '../../infrastructure/feature-flags/openfeature-feature-flags';
 import { RevokedSessionOrmEntity } from '../../infrastructure/persistence/entities/revoked-session.orm-entity';
 import { UserOrmEntity } from '../../infrastructure/persistence/entities/user.orm-entity';
+import { serializedTypeOrmRoot } from '../../test-support/serialized-typeorm';
 import { configureApp, NEST_APPLICATION_OPTIONS } from './configure-app';
 import { AuthModule } from './modules/auth.module';
 
@@ -64,7 +64,7 @@ describe('service-initiated logout (PC10): POST /auth/logout and GET /auth/logge
             }),
           ],
         }),
-        TypeOrmModule.forRoot({
+        serializedTypeOrmRoot({
           type: 'better-sqlite3',
           database: ':memory:',
           entities: [UserOrmEntity, RevokedSessionOrmEntity],
