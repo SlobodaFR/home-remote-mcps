@@ -5,6 +5,7 @@ import { ApiKeyOrmEntity } from './entities/api-key.orm-entity';
 import { CredentialOrmEntity } from './entities/credential.orm-entity';
 import { RevokedSessionOrmEntity } from './entities/revoked-session.orm-entity';
 import { UserOrmEntity } from './entities/user.orm-entity';
+import { serializedDataSourceFactory } from './serialized-connection';
 
 @Module({
   imports: [
@@ -29,6 +30,9 @@ import { UserOrmEntity } from './entities/user.orm-entity';
         synchronize: true,
         autoLoadEntities: true,
       }),
+      // Before initialize(): synchronize and the app run on the serialized connection
+      // (convention sqlite-serialized-transactions).
+      dataSourceFactory: serializedDataSourceFactory,
     }),
   ],
 })
