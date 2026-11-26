@@ -7,7 +7,7 @@ describe('InMemoryYoutubeOAuthStateStore', () => {
 
   beforeEach(() => {
     nowMs = 1_000_000;
-    store = new InMemoryYoutubeOAuthStateStore(60_000, () => nowMs);
+    store = new InMemoryYoutubeOAuthStateStore(60_000, () => nowMs, 0);
   });
 
   it('issues unpredictable, distinct states unrelated to the credential id', async () => {
@@ -75,5 +75,26 @@ describe('InMemoryYoutubeOAuthStateStore', () => {
     });
     expect(await store.consume(a)).toEqual(flow);
     expect(await store.consume(b)).not.toBeNull();
+  });
+
+  describe('idle sweep', () => {
+    afterEach(() => vi.useRealTimers());
+
+    it('purges an expired flow without any access, then stops on destroy', async () => {
+      vi.useFakeTimers();
+      const swept = new InMemoryYoutubeOAuthStateStore(
+        60_000,
+        () => nowMs,
+        30_000,
+      );
+      await swept.issue(flow);
+      nowMs += 61_000;
+
+      vi.advanceTimersByTime(30_000);
+
+      expect(swept.size).toBe(0);
+      swept.onModuleDestroy();
+      expect(vi.getTimerCount()).toBe(0);
+    });
   });
 });
