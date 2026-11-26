@@ -169,7 +169,7 @@ describe('YouTube OAuth start/callback (issue #48)', () => {
       expect(first.state).not.toBe(second.state);
       expect(first.state).not.toBe(first.res.body.pendingId);
       expect(first.cookie).toBe(`${COOKIE}=${first.state}`);
-      expect(Object.keys(first.res.body).sort()).toEqual([
+      expect(Object.keys(first.res.body as object).sort()).toEqual([
         'authorizeUrl',
         'pendingId',
       ]);
