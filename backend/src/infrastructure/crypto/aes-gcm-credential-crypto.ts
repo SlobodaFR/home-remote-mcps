@@ -11,6 +11,7 @@ import { CredentialCrypto } from '../../domain/shared/credential-crypto';
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 const KEY_LENGTH = 32;
+const AUTH_TAG_LENGTH = 16;
 
 /**
  * Encrypts credential session tokens at rest with AES-256-GCM. The key is
@@ -34,7 +35,9 @@ export class AesGcmCredentialCrypto extends CredentialCrypto {
 
   encrypt(plaintext: string): string {
     const iv = randomBytes(IV_LENGTH);
-    const cipher = createCipheriv(ALGORITHM, this.key, iv);
+    const cipher = createCipheriv(ALGORITHM, this.key, iv, {
+      authTagLength: AUTH_TAG_LENGTH,
+    });
     const encrypted = Buffer.concat([
       cipher.update(plaintext, 'utf8'),
       cipher.final(),
@@ -56,6 +59,7 @@ export class AesGcmCredentialCrypto extends CredentialCrypto {
       ALGORITHM,
       this.key,
       Buffer.from(ivB64, 'base64'),
+      { authTagLength: AUTH_TAG_LENGTH },
     );
     decipher.setAuthTag(Buffer.from(authTagB64, 'base64'));
     const decrypted = Buffer.concat([
