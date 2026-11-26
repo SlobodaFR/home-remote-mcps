@@ -15,9 +15,9 @@ export const API_LIMIT_PER_MINUTE = 100;
  * Limits of this safety net: the budget is per route (each of the 9 MCP controllers has its own
  * counter) and a request is counted when it starts, so a long-lived streaming response is never
  * cut. API keys are 32 random bytes, so guessing one is not the threat; the cost of an
- * unauthenticated request is: ApiKeyGuard derives a scrypt hash per stored key before deciding.
- * The limit only caps how much of the event loop one IP can burn; the real fix is to look keys up
- * by a fast hash before the scrypt check (ResolveUserFromApiKeyUseCase).
+ * unauthenticated request is. ApiKeyGuard finds a key by its indexed sha256 (one query, no
+ * scrypt); only keys issued before that existed fall back to a capped asynchronous scrypt check
+ * (ResolveUserFromApiKeyUseCase).
  */
 export const MCP_LIMIT_PER_MINUTE = 300;
 

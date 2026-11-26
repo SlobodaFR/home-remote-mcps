@@ -2,7 +2,10 @@ export interface ApiKeyProps {
   id: string;
   userId: string;
   label: string;
+  /** Salted scrypt of the raw key. Still written for new keys so a rollback to the previous release keeps validating them; drop once that window is closed. */
   hashedKey: string;
+  /** sha256(raw key), the indexed lookup identifier. Null on keys issued before it existed (backfilled on first use). */
+  lookupHash: string | null;
   lastUsedAt: Date | null;
   createdAt: Date;
   revokedAt: Date | null;
@@ -16,7 +19,11 @@ export interface ApiKeyProps {
 export class ApiKey {
   private constructor(private props: ApiKeyProps) {}
 
-  static create(props: Omit<ApiKeyProps, 'lastUsedAt' | 'revokedAt'>): ApiKey {
+  static create(
+    props: Omit<ApiKeyProps, 'lastUsedAt' | 'revokedAt' | 'lookupHash'> & {
+      lookupHash: string;
+    },
+  ): ApiKey {
     return new ApiKey({ ...props, lastUsedAt: null, revokedAt: null });
   }
 
@@ -38,6 +45,10 @@ export class ApiKey {
 
   get hashedKey(): string {
     return this.props.hashedKey;
+  }
+
+  get lookupHash(): string | null {
+    return this.props.lookupHash;
   }
 
   get lastUsedAt(): Date | null {

@@ -1,34 +1,10 @@
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'crypto';
-
-const SCRYPT_KEYLEN = 64;
+import { createHash } from 'crypto';
 
 /**
- * Deterministic SHA-256 digest, used for single-use/lookup tokens where
- * only equality checks against a stored hash are needed.
+ * Deterministic SHA-256 digest (hex). Used as the lookup identifier of API
+ * keys: they are 256 random bits, so a fast unsalted hash is a sound verifier
+ * and lets the row be found by equality instead of scanning every key.
  */
 export function hashToken(rawToken: string): string {
   return createHash('sha256').update(rawToken).digest('hex');
-}
-
-/**
- * Salted scrypt hash for long-lived secrets (API keys), stored as
- * `salt:hash` hex pairs. Use `verifySecret` for constant-time comparison.
- */
-export function hashSecret(rawSecret: string): string {
-  const salt = randomBytes(16).toString('hex');
-  const derived = scryptSync(rawSecret, salt, SCRYPT_KEYLEN).toString('hex');
-  return `${salt}:${derived}`;
-}
-
-export function verifySecret(rawSecret: string, storedHash: string): boolean {
-  const [salt, derived] = storedHash.split(':');
-  if (!salt || !derived) {
-    return false;
-  }
-  const candidate = scryptSync(rawSecret, salt, SCRYPT_KEYLEN);
-  const expected = Buffer.from(derived, 'hex');
-  if (candidate.length !== expected.length) {
-    return false;
-  }
-  return timingSafeEqual(candidate, expected);
 }
