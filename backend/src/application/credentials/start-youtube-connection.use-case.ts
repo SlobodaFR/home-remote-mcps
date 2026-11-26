@@ -16,9 +16,10 @@ export interface StartYoutubeConnectionResult {
 }
 
 /**
- * First step of the YouTube OAuth dance: stashes the user's own Google Cloud
+ * First step of the YouTube OAuth dance: keeps the user's own Google Cloud
  * OAuth Client ID/Secret (each user brings their own, see CredentialsPage)
- * against a pending credential row, and hands back the Google consent URL
+ * with the single-use state (in memory), reusing the user's credential row
+ * (created empty if none) without modifying it, and hands back the Google consent URL
  * to redirect the browser to. Nothing is validated yet - that happens in
  * CompleteYoutubeConnectionUseCase once Google redirects back with a code.
  */
@@ -42,27 +43,29 @@ export class StartYoutubeConnectionUseCase {
       userId,
       YOUTUBE_SERVICE,
     );
-    const credential =
-      existing ??
-      Credential.create({
+    // An existing credential (possibly a valid `ok` one) is left untouched:
+    // abandoning or failing this flow must never cost the user a working
+    // connection. Only a brand-new, empty pending row is created.
+    let credential = existing;
+    if (!credential) {
+      credential = Credential.create({
         id: randomUUID(),
         userId,
         service: YOUTUBE_SERVICE,
         createdAt: now,
         updatedAt: now,
       });
-    // Stash clientId/clientSecret so the callback (a separate, unauthenticated
-    // request from Google) can complete the token exchange without needing
-    // the user's session cookie.
-    credential.markPending(
-      this.credentialCrypto.encrypt(JSON.stringify({ clientId, clientSecret })),
-      now,
-    );
-    await this.credentialRepository.save(credential);
+      await this.credentialRepository.save(credential);
+    }
 
     const state = await this.stateStore.issue({
       userId,
       credentialId: credential.id,
+      // The callback (a separate, unauthenticated request from Google) needs
+      // the client ID/secret to complete the exchange without a session.
+      encryptedClient: this.credentialCrypto.encrypt(
+        JSON.stringify({ clientId, clientSecret }),
+      ),
     });
     return {
       pendingId: credential.id,

@@ -3,7 +3,7 @@ import { InMemoryYoutubeOAuthStateStore } from './in-memory-youtube-oauth-state-
 describe('InMemoryYoutubeOAuthStateStore', () => {
   let nowMs: number;
   let store: InMemoryYoutubeOAuthStateStore;
-  const flow = { userId: 'u1', credentialId: 'c1' };
+  const flow = { userId: 'u1', credentialId: 'c1', encryptedClient: 'enc' };
 
   beforeEach(() => {
     nowMs = 1_000_000;
@@ -11,8 +11,16 @@ describe('InMemoryYoutubeOAuthStateStore', () => {
   });
 
   it('issues unpredictable, distinct states unrelated to the credential id', async () => {
-    const a = await store.issue({ userId: 'u1', credentialId: 'c1' });
-    const b = await store.issue({ userId: 'u2', credentialId: 'c2' });
+    const a = await store.issue({
+      userId: 'u1',
+      credentialId: 'c1',
+      encryptedClient: 'enc',
+    });
+    const b = await store.issue({
+      userId: 'u2',
+      credentialId: 'c2',
+      encryptedClient: 'enc',
+    });
     expect(a).not.toBe(b);
     expect(a).toMatch(/^[A-Za-z0-9_-]{43}$/);
     expect(a).not.toContain('c1');
@@ -60,7 +68,11 @@ describe('InMemoryYoutubeOAuthStateStore', () => {
 
   it('does not let one user supersede another', async () => {
     const a = await store.issue(flow);
-    const b = await store.issue({ userId: 'u2', credentialId: 'c2' });
+    const b = await store.issue({
+      userId: 'u2',
+      credentialId: 'c2',
+      encryptedClient: 'enc',
+    });
     expect(await store.consume(a)).toEqual(flow);
     expect(await store.consume(b)).not.toBeNull();
   });

@@ -119,7 +119,7 @@ bucket).
   the only per-user value, and it isn't sensitive.
 
 All converge on the same `Credential` entity (`domain/credential/credential.ts`) with states
-driven by `markPending` / `markValidated` / `markFailed`.
+driven by `markValidated` / `markFailed`.
 
 ## Auth model detail
 

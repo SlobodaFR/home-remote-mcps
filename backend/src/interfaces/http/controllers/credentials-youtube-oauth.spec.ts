@@ -198,6 +198,60 @@ describe('YouTube OAuth start/callback (issue #48)', () => {
     expect(raw).toContain('Secure');
   });
 
+  describe('existing ok credential (issue #80)', () => {
+    beforeEach(() => boot());
+
+    function seedOk(): Credential {
+      const ok = Credential.create({
+        id: 'cred-ok',
+        userId,
+        service: 'youtube',
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      });
+      ok.markValidated('enc:{"refreshToken":"valid-rt"}', new Date(1));
+      credentials.rows.set(ok.id, ok);
+      return ok;
+    }
+
+    it('keeps the valid tokens and status when a flow is started then abandoned', async () => {
+      const ok = seedOk();
+      await start();
+      expect(ok.status).toBe('ok');
+      expect(ok.encryptedTokens).toBe('enc:{"refreshToken":"valid-rt"}');
+      expect(credentials.rows.size).toBe(1);
+    });
+
+    it('keeps the valid credential when the Google exchange fails', async () => {
+      const ok = seedOk();
+      const { state, cookie } = await start();
+      connector.exchangeCode = () =>
+        Promise.resolve({ status: 'error' as const, message: 'bad code' });
+      const res = await callback(`state=${state}&code=abc`, cookie);
+      expect(res.headers.location).toContain('youtube=error');
+      expect(ok.status).toBe('ok');
+      expect(ok.encryptedTokens).toBe('enc:{"refreshToken":"valid-rt"}');
+    });
+
+    it('replaces the tokens only once the exchange succeeds', async () => {
+      const ok = seedOk();
+      const { state, cookie } = await start();
+      const res = await callback(`state=${state}&code=abc`, cookie);
+      expect(res.headers.location).toBe('https://app.test/?youtube=ok');
+      expect(ok.status).toBe('ok');
+      const stored = JSON.parse(ok.encryptedTokens!.slice(4)) as {
+        clientId: string;
+        clientSecret: string;
+        refreshToken: string;
+      };
+      expect(stored).toMatchObject({
+        clientId: 'cid',
+        clientSecret: 'csecret',
+        refreshToken: 'rt',
+      });
+    });
+  });
+
   describe('callback', () => {
     beforeEach(() => boot());
 

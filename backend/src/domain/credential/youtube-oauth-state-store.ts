@@ -1,6 +1,12 @@
 export interface YoutubeOAuthFlow {
   userId: string;
   credentialId: string;
+  /**
+   * The user's own Google OAuth client ID/secret (JSON, encrypted), carried
+   * with the flow instead of on the credential row so that an existing valid
+   * credential is never touched before Google's exchange succeeds.
+   */
+  encryptedClient: string;
 }
 
 /**
