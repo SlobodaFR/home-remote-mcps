@@ -233,6 +233,16 @@ describe('YouTube OAuth start/callback (issue #48)', () => {
       expect(ok.encryptedTokens).toBe('enc:{"refreshToken":"valid-rt"}');
     });
 
+    it('still marks a non-ok credential failed when the exchange fails', async () => {
+      const { state, cookie } = await start();
+      connector.exchangeCode = () =>
+        Promise.resolve({ status: 'error' as const, message: 'bad code' });
+      await callback(`state=${state}&code=abc`, cookie);
+      const [row] = [...credentials.rows.values()];
+      expect(row.status).toBe('failed');
+      expect(row.lastError).toBe('bad code');
+    });
+
     it('replaces the tokens only once the exchange succeeds', async () => {
       const ok = seedOk();
       const { state, cookie } = await start();
