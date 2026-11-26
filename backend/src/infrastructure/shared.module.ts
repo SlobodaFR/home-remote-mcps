@@ -7,9 +7,11 @@ import { LogsConnector } from '../domain/logs/log-connector';
 import { MarkitdownConnector } from '../domain/markitdown/markitdown-connector';
 import { OpenAiConnector } from '../domain/openai/openai-connector';
 import { PersonalHealthConnector } from '../domain/personal-health/personal-health-connector';
+import { SecretHasher } from '../domain/shared/secret-hasher';
 import { CredentialCrypto } from '../domain/shared/credential-crypto';
 import { FeatureFlags } from '../domain/shared/feature-flags';
 import { YoutubeConnector } from '../domain/youtube/youtube-connector';
+import { ScryptSecretHasher } from './crypto/scrypt-secret-hasher';
 import { createFeatureFlags } from './feature-flags/openfeature-feature-flags';
 import { HttpCookidooConnector } from './cookidoo/http-cookidoo-connector';
 import { AesGcmCredentialCrypto } from './crypto/aes-gcm-credential-crypto';
@@ -27,6 +29,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
 @Module({
   providers: [
     { provide: CredentialCrypto, useClass: AesGcmCredentialCrypto },
+    { provide: SecretHasher, useClass: ScryptSecretHasher },
     {
       provide: FeatureFlags,
       useFactory: () => createFeatureFlags(process.env),
@@ -46,6 +49,7 @@ import { HttpYoutubeConnector } from './youtube/http-youtube-connector';
   ],
   exports: [
     CredentialCrypto,
+    SecretHasher,
     FeatureFlags,
     CookidooConnector,
     GarminConnector,

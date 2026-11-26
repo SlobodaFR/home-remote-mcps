@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CreateApiKeyUseCase } from '../../../application/api-keys/create-api-key.use-case';
+import { LegacyApiKeyAudit } from '../../../application/api-keys/legacy-api-key-audit';
 import { ListApiKeysUseCase } from '../../../application/api-keys/list-api-keys.use-case';
 import { RevokeApiKeyUseCase } from '../../../application/api-keys/revoke-api-key.use-case';
 import { ApiKeyRepository } from '../../../domain/api-key/api-key.repository';
@@ -16,6 +17,7 @@ import { ApiKeysController } from '../controllers/api-keys.controller';
     CreateApiKeyUseCase,
     ListApiKeysUseCase,
     RevokeApiKeyUseCase,
+    LegacyApiKeyAudit,
   ],
   exports: [ApiKeyRepository],
 })

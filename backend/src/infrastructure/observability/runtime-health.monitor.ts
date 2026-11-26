@@ -31,7 +31,7 @@ const round = (value: number, digits: number) => Number(value.toFixed(digits));
 /**
  * Event-loop health: delay percentiles, utilization and memory, sampled every minute, sent as
  * runtime_health telemetry and kept for /healthz. Known sources of blocking: synchronous SQLite (better-sqlite3) and CPU-bound crypto
- * (scrypt/AES-GCM on credentials).
+ * (AES-GCM on credentials).
  */
 @Injectable()
 export class RuntimeHealthMonitor
