@@ -14,4 +14,7 @@ export const SPA_EXCLUDED_ROUTES = [
   // Internal health check, served outside the /api prefix.
   `/${HEALTH_ROUTE}`,
   `/${HEALTH_ROUTE}/*path`,
+  // Public release identity, served outside the /api prefix.
+  '/version',
+  '/version/*path',
 ];

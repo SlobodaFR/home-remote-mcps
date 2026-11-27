@@ -58,6 +58,10 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
 # Un volume existant cree par l'ancienne image (root) est rendu a l'uid 1000 par le deploiement :
 # deploy/scripts/fix-volume-owner.sh (convention harnais docker-nonroot-volume).
 USER node
+# Release identity (convention harnais release-versioning), en fin d'étage final : le cache de build reste valide.
+ARG APP_VERSION=dev
+ARG APP_COMMIT=dev
+ENV APP_VERSION=$APP_VERSION APP_COMMIT=$APP_COMMIT
 VOLUME ["/app/backend/data"]
 WORKDIR /app/backend
 EXPOSE 3000

@@ -50,6 +50,14 @@ class McpController {
   }
 }
 
+@Controller('version')
+class VersionController {
+  @Get()
+  version(): string {
+    return 'ok';
+  }
+}
+
 @Controller(HEALTH_ROUTE)
 class HealthController {
   @Get()
@@ -75,7 +83,12 @@ describe('HTTP telemetry', () => {
           exclude: SPA_EXCLUDED_ROUTES,
         }),
       ],
-      controllers: [ItemsController, McpController, HealthController],
+      controllers: [
+        ItemsController,
+        McpController,
+        HealthController,
+        VersionController,
+      ],
       providers: [
         { provide: Telemetry, useValue: telemetry },
         { provide: APP_INTERCEPTOR, useClass: TelemetryInterceptor },
@@ -86,7 +99,7 @@ describe('HTTP telemetry', () => {
       logger: false,
     });
     // Production shape (configureApp): everything under /api except the health check.
-    app.setGlobalPrefix('api', { exclude: [HEALTH_ROUTE] });
+    app.setGlobalPrefix('api', { exclude: [HEALTH_ROUTE, 'version'] });
     await app.init();
   });
 
@@ -139,6 +152,12 @@ describe('HTTP telemetry', () => {
       },
     ]);
     expect(JSON.stringify(telemetry.captured)).not.toContain('alice');
+  });
+
+  it('does not report /version (public release identity, cost amplifier)', async () => {
+    await request(app.getHttpServer()).get('/version').expect(200);
+
+    expect(telemetry.captured).toEqual([]);
   });
 
   it('does not report /healthz (polled by the Docker healthcheck every 30 s)', async () => {

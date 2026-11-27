@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { buildInfo } from './infrastructure/observability/build-info';
 import {
   configureApp,
   NEST_APPLICATION_OPTIONS,
@@ -20,6 +21,10 @@ async function bootstrap(): Promise<void> {
 
   const port = process.env.PORT ? Number(process.env.PORT) : 3000;
   await app.listen(port);
+  const { version, commit } = buildInfo();
+  app
+    .get(Logger)
+    .log(`home-remote-mcps started version=${version} commit=${commit}`);
 }
 
 void bootstrap();

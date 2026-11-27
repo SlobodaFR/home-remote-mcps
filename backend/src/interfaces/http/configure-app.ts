@@ -44,7 +44,8 @@ export function configureApp(
     ),
   );
   // /healthz is outside the /api prefix so that Caddy can block it with `respond /healthz* 404`.
-  app.setGlobalPrefix('api', { exclude: [HEALTH_ROUTE] });
+  // /version (public release identity) is outside /api too, and not blocked by Caddy.
+  app.setGlobalPrefix('api', { exclude: [HEALTH_ROUTE, 'version'] });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.use(cookieParser());
   // Puts the real exception on the request completion log line (through the whitelist serializer).
