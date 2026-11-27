@@ -131,7 +131,7 @@ jobs:
       - name: Boot check main app (the container must start and stay healthy)
         run: |
           sh .github/scripts/docker-boot-check.sh --service home-remote-mcps --image home-remote-mcps:ci-${{ github.run_id }}-${{ github.run_attempt }} --rm-image \
-            --volume /app/backend/data --path /healthz --expect /healthz=200 \
+            --volume /app/backend/data --path /healthz --expect /healthz=200 --expect /version=200 \
             --expect /api/api-keys=401 --expect /api/unknown=404 --forbid-ts \
             --s3-stub minio \
             --env AUTH_SERVICE_URL=https://auth.example.test --env AUTH_CLIENT_ID=home-remote-mcps \

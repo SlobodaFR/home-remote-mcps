@@ -129,11 +129,27 @@ describe('PostHogTelemetry', () => {
       properties: {
         ...httpRequest.properties,
         service: 'home-remote-mcps',
+        version: 'dev',
         $ip: null,
         $process_person_profile: false,
       },
       disableGeoip: true,
     });
+  });
+
+  it('adds the release version (APP_VERSION) to every ops event', () => {
+    vi.stubEnv('APP_VERSION', '2.5.1');
+    const client = new FakeClient();
+    const telemetry = new PostHogTelemetry(client);
+
+    telemetry.capture(httpRequest);
+    telemetry.capture(httpRequest);
+
+    expect(client.captured.map((c) => c.properties['version'])).toEqual([
+      '2.5.1',
+      '2.5.1',
+    ]);
+    vi.unstubAllEnvs();
   });
 
   it('drops properties that look like personal data', () => {

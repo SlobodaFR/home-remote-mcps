@@ -10,6 +10,10 @@ COPY app ./app
 # Non root (uid/gid 1000, comme l'utilisateur node du backend). Aucun volume : /tmp et le HOME suffisent.
 RUN groupadd --gid 1000 app \
     && useradd --uid 1000 --gid 1000 --create-home --home-dir /home/app --shell /usr/sbin/nologin app
+# Release identity (convention harnais release-versioning), en fin d'étage final : le cache de build reste valide.
+ARG APP_VERSION=dev
+ARG APP_COMMIT=dev
+ENV APP_VERSION=$APP_VERSION APP_COMMIT=$APP_COMMIT
 USER app
 
 # Internal-only service: no public port mapping in docker-compose, reached

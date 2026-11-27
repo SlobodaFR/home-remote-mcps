@@ -61,7 +61,22 @@ describe('GET /healthz', () => {
       .get('/healthz')
       .expect(200);
 
-    expect(response.body).toEqual({ status: 'ok', runtime: null });
+    expect(response.body).toEqual({
+      status: 'ok',
+      version: 'dev',
+      commit: 'dev',
+      runtime: null,
+    });
+  });
+
+  it('answers GET /version without a session, never cached, outside /api and never the SPA shell', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/version')
+      .expect(200);
+
+    expect(response.headers['content-type']).toMatch(/json/);
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.body).toEqual({ version: 'dev', commit: 'dev' });
   });
 
   it('is not served under /api (Caddy only blocks /healthz*)', async () => {
@@ -100,6 +115,11 @@ describe('GET /healthz', () => {
       .get('/healthz')
       .expect(200);
 
-    expect(response.body).toEqual({ status: 'ok', runtime: sample });
+    expect(response.body).toEqual({
+      status: 'ok',
+      version: 'dev',
+      commit: 'dev',
+      runtime: sample,
+    });
   });
 });

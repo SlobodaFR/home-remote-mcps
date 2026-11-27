@@ -13,11 +13,12 @@ import { routeOf } from './route-of';
 /**
  * Probed or polled routes: high volume, no debugging value.
  * - '/healthz': Docker HEALTHCHECK every 30 s (HEALTH_ROUTE, served outside the /api prefix).
+ * - '/version': public release identity, no auth (convention harnais release-versioning): one event per call would be a cost amplifier.
  * Not listed on purpose: the MCP routes (POST /api/mcp/<connector>/:apiKey) are stateless
  * Streamable HTTP, one short request per JSON-RPC message (no GET, no long-lived SSE stream, no
  * poller), and only their route template is read, never the API key or the JSON-RPC body.
  */
-const UNREPORTED_ROUTES = new Set(['/healthz']);
+const UNREPORTED_ROUTES = new Set(['/healthz', '/version']);
 
 /** Reports every request handled by a Nest route (http_request): route template only. */
 @Injectable()
