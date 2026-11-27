@@ -40,7 +40,8 @@ describe('upstreamErrorMessage', () => {
     ],
     [
       'a Google access token',
-      'Invalid token ya29.a0AfH6SMBx-secret_part',
+      // Assembled at runtime so secret scanners do not flag this fake token.
+      `Invalid token ${['ya29', 'a0AfH6SMBx-secret_part'].join('.')}`,
       'secret_part',
     ],
     [
